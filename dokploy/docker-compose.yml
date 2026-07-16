@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  album-splitter:
+    build:
+      context: ..
+      dockerfile: dokploy/Dockerfile
+    container_name: album-splitter
+    volumes:
+      - ./input:/app/input
+      - ./output:/app/output
+      - ./splits:/app/splits
+    environment:
+      - PYTHONUNBUFFERED=1
+    # Uncomment to run specific commands
+    # command: python -m album_splitter --file /app/input/album.mp3
