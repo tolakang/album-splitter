@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { existsSync, createReadStream, statSync } from 'fs';
+import { existsSync, createReadStream, unlinkSync } from 'fs';
 import { join } from 'path';
 import * as archiver from 'archiver';
 import { Response } from 'express';
@@ -24,11 +24,10 @@ export class DownloadService {
 
     res.setHeader('Content-Disposition', `attachment; filename="${file.filename}"`);
     res.setHeader('Content-Type', 'application/octet-stream');
-    
+
     const stream = createReadStream(file.path);
     stream.pipe(res);
 
-    // Mark as downloaded
     await this.prisma.generatedFile.update({
       where: { id: fileId },
       data: { downloaded: true },
@@ -36,11 +35,11 @@ export class DownloadService {
   }
 
   async downloadAlbumZip(albumId: string, res: Response): Promise<void> {
-    const album = await this.prisma.album.findUnique({ 
+    const album = await this.prisma.album.findUnique({
       where: { id: albumId },
       include: { generatedFiles: true },
     });
-    
+
     if (!album) {
       throw new NotFoundException(`Album ${albumId} not found`);
     }
@@ -55,7 +54,7 @@ export class DownloadService {
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', `attachment; filename="${zipFilename}"`);
 
-    const archive = archiver('zip', { zlib: { level: 1 } }); // Low compression for speed
+    const archive = archiver('zip', { zlib: { level: 1 } });
     archive.pipe(res);
 
     for (const file of album.generatedFiles) {
@@ -66,7 +65,6 @@ export class DownloadService {
 
     await archive.finalize();
 
-    // Mark all files as downloaded
     await this.prisma.generatedFile.updateMany({
       where: { albumId },
       data: { downloaded: true },
@@ -80,7 +78,6 @@ export class DownloadService {
     }
 
     if (existsSync(file.path)) {
-      const { unlinkSync } = require('fs');
       unlinkSync(file.path);
     }
 

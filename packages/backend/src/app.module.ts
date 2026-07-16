@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { PrismaModule } from './prisma.module';
 import { AlbumModule } from './album/album.module';
 import { UploadModule } from './upload/upload.module';
@@ -11,6 +12,7 @@ import { QueueModule } from './queue/queue.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
     PrismaModule,
     QueueModule,
     AlbumModule,

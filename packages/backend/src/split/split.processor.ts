@@ -1,6 +1,7 @@
-import { Process, Processor, OnQueueActive, OnQueueCompleted, OnQueueFailed } from '@nestjs/bullmq';
+import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
+import { statSync } from 'fs';
 import { PrismaService } from '../prisma.service';
 import { SplitService } from './split.service';
 import { AlbumStatus } from '@prisma/client';
@@ -13,28 +14,27 @@ interface AudioJobData {
 }
 
 @Processor('audio-processing')
-export class SplitProcessor {
+export class SplitProcessor extends WorkerHost {
   private readonly logger = new Logger(SplitProcessor.name);
 
   constructor(
     private prisma: PrismaService,
     private splitService: SplitService,
-  ) {}
+  ) {
+    super();
+  }
 
-  @Process('process-album')
-  async handleProcessAlbum(job: Job<AudioJobData>) {
+  async process(job: Job<AudioJobData>): Promise<any> {
     const { albumId, audioPath, tracks, outputFormat } = job.data;
-    
+
     this.logger.log(`Processing album ${albumId} with ${tracks.length} tracks`);
 
     try {
-      // Update album status to splitting
       await this.prisma.album.update({
         where: { id: albumId },
         data: { status: AlbumStatus.SPLITTING },
       });
 
-      // Split the audio
       const outputFiles = await this.splitService.splitAudio(
         albumId,
         audioPath,
@@ -42,26 +42,23 @@ export class SplitProcessor {
         outputFormat,
       );
 
-      // Create generated file records
       for (const filePath of outputFiles) {
         const filename = filePath.split('/').pop() || '';
-        const stats = require('fs').statSync(filePath);
-        
+        const stats = statSync(filePath);
+
         await this.prisma.generatedFile.create({
           data: {
             albumId,
             filename,
-            size: BigInt(stats.size),
+            size: stats.size,
             path: filePath,
-            expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
           },
         });
       }
 
-      // Update album status to completed
       await this.prisma.album.update({
         where: { id: albumId },
-        data: { 
+        data: {
           status: AlbumStatus.COMPLETED,
           progress: 100,
         },
@@ -72,10 +69,10 @@ export class SplitProcessor {
 
     } catch (error) {
       this.logger.error(`Failed to process album ${albumId}: ${error.message}`);
-      
+
       await this.prisma.album.update({
         where: { id: albumId },
-        data: { 
+        data: {
           status: AlbumStatus.FAILED,
           errorMessage: error.message,
         },
@@ -85,17 +82,17 @@ export class SplitProcessor {
     }
   }
 
-  @OnQueueActive()
+  @OnWorkerEvent('active')
   onActive(job: Job) {
     this.logger.log(`Processing job ${job.id} of type ${job.name}`);
   }
 
-  @OnQueueCompleted()
+  @OnWorkerEvent('completed')
   onCompleted(job: Job, result: any) {
     this.logger.log(`Job ${job.id} completed with result: ${JSON.stringify(result)}`);
   }
 
-  @OnQueueFailed()
+  @OnWorkerEvent('failed')
   onFailed(job: Job, error: Error) {
     this.logger.error(`Job ${job.id} failed with error: ${error.message}`);
   }

@@ -1,6 +1,13 @@
-import { Album, CreateAlbumRequest, GeneratedFile } from '@/types';
+import { Album, CreateAlbumRequest, GeneratedFile, SplitRequest, SplitResponse } from '@/types';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+function extractErrorMessage(error: any): string {
+  if (error?.message && Array.isArray(error.message)) {
+    return error.message.join(', ');
+  }
+  return error?.message || 'Unknown error';
+}
 
 async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE}${endpoint}`, {
@@ -13,7 +20,12 @@ async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> 
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Unknown error' }));
-    throw new Error(error.message || `API error: ${response.status}`);
+    throw new Error(extractErrorMessage(error) || `API error: ${response.status}`);
+  }
+
+  // Handle 204 No Content
+  if (response.status === 204) {
+    return undefined as T;
   }
 
   return response.json();
@@ -32,8 +44,16 @@ export const api = {
     }),
   },
 
+  split: {
+    trigger: (albumId: string, data: SplitRequest) =>
+      fetchAPI<SplitResponse>(`/api/split/${albumId}`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+  },
+
   upload: {
-    file: async (albumId: string, file: File): Promise<{ path: string; filename: string }> => {
+    file: async (albumId: string, file: File): Promise<{ filename: string }> => {
       const formData = new FormData();
       formData.append('file', file);
 
@@ -44,7 +64,7 @@ export const api = {
 
       if (!response.ok) {
         const error = await response.json().catch(() => ({ message: 'Upload failed' }));
-        throw new Error(error.message || `Upload error: ${response.status}`);
+        throw new Error(extractErrorMessage(error) || `Upload error: ${response.status}`);
       }
 
       return response.json();

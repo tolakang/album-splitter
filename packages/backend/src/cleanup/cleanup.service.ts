@@ -67,19 +67,16 @@ export class CleanupService {
   }
 
   async cleanupOrphanedFiles(): Promise<void> {
-    // Find albums that are completed but not downloaded
+    // Find completed albums where all generated files are downloaded
     const completedAlbums = await this.prisma.album.findMany({
       where: {
         status: AlbumStatus.COMPLETED,
-        generatedFiles: {
-          every: { downloaded: true },
-        },
       },
+      include: { generatedFiles: true },
     });
 
     for (const album of completedAlbums) {
-      const allDownloaded = album.generatedFiles.every(f => f.downloaded);
-      if (allDownloaded) {
+      if (album.generatedFiles.length > 0 && album.generatedFiles.every(f => f.downloaded)) {
         this.logger.log(`Album ${album.id} has all files downloaded, cleaning up`);
         await this.cleanupAlbum(album.id);
       }

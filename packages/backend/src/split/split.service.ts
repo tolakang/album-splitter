@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { existsSync, mkdirSync, readdirSync, statSync } from 'fs';
+import { existsSync, mkdirSync, readdirSync, statSync, unlinkSync, rmSync } from 'fs';
 import { join } from 'path';
-import { v4 as uuidv4 } from 'uuid';
 import * as musicMetadata from 'music-metadata';
+import * as ffmpeg from 'fluent-ffmpeg';
 
 interface Track {
   title: string;
@@ -40,12 +40,11 @@ export class SplitService {
 
     this.logger.log(`Splitting audio for album ${albumId} with ${tracks.length} tracks`);
 
-    // Get audio duration using ffprobe
     const duration = await this.getAudioDuration(audioPath);
     this.logger.log(`Audio duration: ${duration} seconds`);
 
     const outputFiles: string[] = [];
-    const zeroPadding = String(tracks.length).length;
+    const zeroPadding = Math.max(2, String(tracks.length).length);
 
     for (let i = 0; i < tracks.length; i++) {
       const track = tracks[i];
@@ -58,7 +57,6 @@ export class SplitService {
       await this.extractTrack(audioPath, outputPath, startTimestamp, endTimestamp);
       outputFiles.push(outputPath);
 
-      // Update album progress
       const progress = Math.round(((i + 1) / tracks.length) * 100);
       await this.prisma.album.update({
         where: { id: albumId },
@@ -87,21 +85,21 @@ export class SplitService {
     startSeconds: number,
     endSeconds: number,
   ): Promise<void> {
-    // This would use fluent-ffmpeg or call ffprobe/ffmpeg directly
-    // For now, using a placeholder implementation
-    this.logger.log(`Extracting: ${startSeconds}s to ${endSeconds}s → ${outputPath}`);
-    
-    // TODO: Implement actual FFmpeg extraction
-    // const ffmpeg = require('fluent-ffmpeg');
-    // return new Promise((resolve, reject) => {
-    //   ffmpeg(inputPath)
-    //     .setStartTime(startSeconds)
-    //     .setDuration(endSeconds - startSeconds)
-    //     .output(outputPath)
-    //     .on('end', resolve)
-    //     .on('error', reject)
-    //     .run();
-    // });
+    const duration = endSeconds - startSeconds;
+    this.logger.log(`Extracting: ${startSeconds}s to ${endSeconds}s (${duration}s) → ${outputPath}`);
+
+    return new Promise((resolve, reject) => {
+      ffmpeg(inputPath)
+        .setStartTime(startSeconds)
+        .setDuration(duration)
+        .output(outputPath)
+        .on('end', () => resolve())
+        .on('error', (err: Error) => {
+          this.logger.error(`FFmpeg extraction failed: ${err.message}`);
+          reject(err);
+        })
+        .run();
+    });
   }
 
   async getGeneratedFiles(albumId: string): Promise<string[]> {
@@ -116,24 +114,13 @@ export class SplitService {
   }
 
   async deleteGeneratedFiles(albumId: string): Promise<void> {
-    const files = await this.getGeneratedFiles(albumId);
-    const { unlinkSync } = require('fs');
-    
-    for (const file of files) {
-      try {
-        unlinkSync(file);
-        this.logger.log(`Deleted file: ${file}`);
-      } catch (error) {
-        this.logger.error(`Failed to delete file ${file}: ${error.message}`);
-      }
-    }
-
     const outputDir = join(this.generatedDir, albumId);
     if (existsSync(outputDir)) {
       try {
-        require('fs').rmdirSync(outputDir);
+        rmSync(outputDir, { recursive: true, force: true });
+        this.logger.log(`Deleted directory: ${outputDir}`);
       } catch (error) {
-        // Directory not empty, ignore
+        this.logger.error(`Failed to delete directory ${outputDir}: ${error.message}`);
       }
     }
   }

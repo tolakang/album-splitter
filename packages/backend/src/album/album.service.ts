@@ -1,10 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { Album, AlbumStatus } from '@prisma/client';
+import { SplitService } from '../split/split.service';
 
 @Injectable()
 export class AlbumService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(AlbumService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    private splitService: SplitService,
+  ) {}
 
   async create(data: { title?: string; youtubeUrl?: string }): Promise<Album> {
     return this.prisma.album.create({
@@ -12,7 +18,6 @@ export class AlbumService {
         title: data.title,
         youtubeUrl: data.youtubeUrl,
         status: AlbumStatus.PENDING,
-        expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
       },
     });
   }
@@ -50,6 +55,12 @@ export class AlbumService {
   }
 
   async delete(id: string): Promise<void> {
+    // Clean up disk files before deleting DB record
+    try {
+      await this.splitService.deleteGeneratedFiles(id);
+    } catch (error) {
+      this.logger.warn(`Failed to clean disk files for album ${id}: ${error.message}`);
+    }
     await this.prisma.album.delete({ where: { id } });
   }
 

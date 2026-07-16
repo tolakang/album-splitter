@@ -11,14 +11,14 @@ export class DownloadController {
   @Get(':fileId')
   @ApiOperation({ summary: 'Download a single file' })
   @ApiResponse({ status: 200, description: 'File downloaded successfully' })
-  async downloadFile(@Param('fileId') fileId: string, @Res() res: Response) {
+  async downloadFile(@Param('fileId') fileId: string, @Res({ passthrough: true }) res: Response) {
     return this.downloadService.downloadFile(fileId, res);
   }
 
   @Get('zip/:albumId')
   @ApiOperation({ summary: 'Download album as ZIP' })
   @ApiResponse({ status: 200, description: 'ZIP downloaded successfully' })
-  async downloadZip(@Param('albumId') albumId: string, @Res() res: Response) {
+  async downloadZip(@Param('albumId') albumId: string, @Res({ passthrough: true }) res: Response) {
     return this.downloadService.downloadAlbumZip(albumId, res);
   }
 

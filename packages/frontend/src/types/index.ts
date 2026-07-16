@@ -34,7 +34,6 @@ export interface GeneratedFile {
   filename: string;
   originalName?: string;
   size: number;
-  path: string;
   downloaded: boolean;
   createdAt: string;
   expiresAt: string;
@@ -43,13 +42,18 @@ export interface GeneratedFile {
 export interface CreateAlbumRequest {
   title?: string;
   youtubeUrl?: string;
+  tracks?: Track[];
 }
 
 export interface SplitRequest {
-  albumId: string;
-  audioPath: string;
   tracks: Track[];
   outputFormat?: string;
+}
+
+export interface SplitResponse {
+  jobId: string;
+  albumId: string;
+  message: string;
 }
 
 export interface Track {

@@ -23,6 +23,23 @@ export function YouTubeSection({ onAlbumCreated }: YouTubeSectionProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
+  const parseTrackList = (text: string) => {
+    const lines = text.trim().split('\n');
+    const tracks = [];
+    for (const line of lines) {
+      const match = line.match(/^(\d{1,2}):(\d{2})\s+(.+)$/);
+      if (match) {
+        const minutes = parseInt(match[1], 10);
+        const seconds = parseInt(match[2], 10);
+        tracks.push({
+          title: match[3].trim(),
+          startTimestamp: minutes * 60 + seconds,
+        });
+      }
+    }
+    return tracks;
+  };
+
   const handleSplit = async () => {
     if (!youtubeUrl) {
       toast.error("Please enter a YouTube URL");
@@ -34,14 +51,24 @@ export function YouTubeSection({ onAlbumCreated }: YouTubeSectionProps) {
       return;
     }
 
+    const tracks = parseTrackList(trackList);
+    if (tracks.length === 0) {
+      toast.error("Invalid track list format. Use: MM:SS Track Title");
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
-      // Create album
+      // Create album with tracks
       const album = await api.albums.create({
         youtubeUrl,
         title: albumTitle || undefined,
+        tracks,
       });
+
+      // Trigger split (YouTube URL will be downloaded by backend worker)
+      await api.split.trigger(album.id, { tracks });
 
       toast.success("Album created! Processing started...");
       onAlbumCreated(album);
@@ -52,8 +79,8 @@ export function YouTubeSection({ onAlbumCreated }: YouTubeSectionProps) {
       setAlbumTitle("");
       setIsExpanded(false);
 
-    } catch (error) {
-      toast.error("Failed to create album");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to create album");
     } finally {
       setIsProcessing(false);
     }

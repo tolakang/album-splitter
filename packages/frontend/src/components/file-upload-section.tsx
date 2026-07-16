@@ -72,6 +72,23 @@ export function FileUploadSection({ onAlbumCreated }: FileUploadSectionProps) {
     }
   }, []);
 
+  const parseTrackList = (text: string) => {
+    const lines = text.trim().split('\n');
+    const tracks = [];
+    for (const line of lines) {
+      const match = line.match(/^(\d{1,2}):(\d{2})\s+(.+)$/);
+      if (match) {
+        const minutes = parseInt(match[1], 10);
+        const seconds = parseInt(match[2], 10);
+        tracks.push({
+          title: match[3].trim(),
+          startTimestamp: minutes * 60 + seconds,
+        });
+      }
+    }
+    return tracks;
+  };
+
   const handleSplit = async (card: UploadCard) => {
     if (!card.audioFile) {
       toast.error("Please upload an audio file");
@@ -83,18 +100,28 @@ export function FileUploadSection({ onAlbumCreated }: FileUploadSectionProps) {
       return;
     }
 
+    const tracks = parseTrackList(card.trackList);
+    if (tracks.length === 0) {
+      toast.error("Invalid track list format. Use: MM:SS Track Title");
+      return;
+    }
+
     updateCard(card.id, { isUploading: true });
 
     try {
-      // Create album
+      // Create album with tracks
       const album = await api.albums.create({
         title: card.albumTitle || card.audioFile.name.replace(/\.[^/.]+$/, ""),
+        tracks,
       });
 
       // Upload file
       await api.upload.file(album.id, card.audioFile);
 
-      toast.success("Album created! Processing started...");
+      // Trigger split
+      await api.split.trigger(album.id, { tracks });
+
+      toast.success("Album created and split started!");
       onAlbumCreated(album);
 
       // Reset card
@@ -105,8 +132,8 @@ export function FileUploadSection({ onAlbumCreated }: FileUploadSectionProps) {
         isUploading: false,
       });
 
-    } catch (error) {
-      toast.error("Failed to process album");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to process album");
       updateCard(card.id, { isUploading: false });
     }
   };
