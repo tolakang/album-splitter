@@ -1,162 +1,128 @@
-# album-splitter
+# Album Splitter
 
-Use **album-splitter** to automatically split any audio file (youtube videos, albums, podcasts, audiobooks, tapes, vinyls) into separate tracks starting from timestamps. album-splitter will also tag each track with its metadata.
+Split single-file MP3 albums into individual tracks. Download from YouTube supported.
 
-<p align="center">
-    <img src='.github/readme/hero.png' width='500px'>
-</p>
+## Features
 
-Common use cases covered:
+- **YouTube Integration**: Download and split YouTube videos
+- **Audio File Upload**: Split local audio files (MP3, WAV, FLAC, OGG, M4A)
+- **Track Parsing**: Parse timestamps (MM:SS or HH:MM:SS) from text files
+- **Metadata Tagging**: Write ID3 tags (artist, album, year, track number)
+- **Web Interface**: Modern React UI with dark mode
+- **Batch Processing**: Split multiple albums simultaneously
+- **ZIP Download**: Download all tracks as a single ZIP file
+- **Auto Cleanup**: Files expire after 1 hour
 
-* music album on YouTube to download and split into tracks
-* full audiobook to split into chapters
-* music tape/cassette rip to split into tracks
-* digitalized vinyl to split into tracks
+## Quick Start
 
-All you need is:
+### Prerequisites
 
-* The file to split OR an URL of a YouTube video
-* Timestamps for each track, for example:
-    * `00:06 - When I Was Young`
-    * `03:35 Dogs Eating Dogs`
+- Node.js 22+
+- PostgreSQL 16+
+- Redis 7+
+- FFmpeg
 
-## How to install
+### Local Development
 
-First time only:
+```bash
+# Clone repository
+git clone https://github.com/tolakang/album-splitter.git
+cd album-splitter
 
-+ Install `ffmpeg`
-    * Linux: `apt install ffmpeg` (or equivalent)
-    * Windows: [Official website](https://ffmpeg.org/)
-    * MacOS: [Official website](https://ffmpeg.org/) or `brew install ffmpeg`
-+ Install `Python 3` (a version newer or equal to `3.12` is required)
-    * Linux: `apt install python3` (or equivalent)
-    * Windows: [Official webiste](https://www.python.org/)
-    * MacOS: You should have it already installed or `brew install python3`
-+ Open your terminal app
-+ Create a virtual environment
-    * `python3 -m venv venv`
-+ Activate the virtual environment
-   * Linux/MacOS: `source venv/bin/activate`
-   * Windows: `./venv/Scripts/activate`
-+ Install album-splitter
-    * `python3 -m pip install album-splitter`
-+ You are ready to go!
+# Install backend dependencies
+cd packages/backend
+npm install
+cp .env.example .env
+# Edit .env with your database credentials
+npx prisma generate
+npx prisma migrate dev
+npm run start:dev
 
-After the first time:
-
-+ Open your terminal app
-+ Activate the virtual environment
-   * Linux/MacOS: `source venv/bin/activate`
-   * Windows: `./venv/Scripts/activate`
-+ Optional, update `album-splitter`:
-    * `python3 -m pip install --upgrade album-splitter`
-+ You are ready to go!
-
-## Quick guide (from a local album)
-
-+ Create a copy of the `tracks.txt.example`, rename it as `tracks.txt`
-+ Open `tracks.txt`
-+ Add your tracks timestamps info in this format:
-    * `<start-time> - <title>`
-    * A track on each line
-    * See *Examples* section, many other formats supported
-+ Run the script
-    * Basic usage: `python -m album_splitter --file <path/to/your/album.mp3>`
-    * With custom output folder: `python -m album_splitter -f </path/to/your_file.mp3> -t </path/to/your_tracks.txt> -o </path/to/output/folder>`
-    * More in the *Examples* section
-+ Wait for the splitting process to complete
-+ You will find your tracks in the `./splits/` folder or in your custom output folder if specified
-
-## Quick guide (from a YouTube video)
-
-+ Copy the YouTube URL of the album you want to download and split
-+ Find in the YouTube comments the tracklist with start-time and title
-+ Create a copy of the `tracks.txt.example`, rename it as `tracks.txt`
-+ Open `tracks.txt`
-+ Copy the tracklist in the file, adjusting for the supported formats
-    * `<start-time> - <title>`
-    * A track on each line
-+ Run the script
-    * Basic usage: `python -m album_splitter -yt <youtube_url>`
-    * More in the *Examples* section
-+ Wait for the Download and for the conversion
-+ Wait for the splitting process to complete
-+ You will find your tracks in the `./splits` folder
-
-## Output Format
-
-The format of the output tracks is the same as the format of the input (same extension, same codec, same bitrate, ...), it simply does a copy of the codec. If you want to convert the output tracks to a different format you can do so, but album-splitter won't do it for you.
-
-For example to convert from `.wav` to `.mp3` you can use FFmpeg. [Here](https://stackoverflow.com/a/41207442) is how you can do it on Linux/macOS. [This](https://sourceforge.net/projects/ffmpeg-batch/) is a GUI option for Windows.
-
-## Examples
-
-### Downloading and splitting an album from YouTube
-
-+ This is the album I want to download and split: `https://www.youtube.com/watch?v=p_uqD4ng9hw`
-+ I find the tracklist in the comments and I copy that in `tracks.txt`, eventually adjusting it to a supported format for the tracklist
-+
-```
-00:06 - When I Was Young
-...
-14:48 - Pretty Little Girl
+# Install frontend dependencies (new terminal)
+cd packages/frontend
+npm install
+npm run dev
 ```
 
-+ I execute `python -m album_splitter -yt "https://www.youtube.com/watch?v=p_uqD4ng9hw"` and wait
-+ Once the process is complete I open the `./splits` and I find all my songs:
+### Docker Deployment
+
+```bash
+# Clone repository
+git clone https://github.com/tolakang/album-splitter.git
+cd album-splitter
+
+# Start all services
+cd dokploy-new
+docker compose up -d
+
+# Access:
+# - Frontend: http://localhost:3000
+# - Backend API: http://localhost:3001
+# - Swagger Docs: http://localhost:3001/api/docs
 ```
-    When I Was Young.mp3
-    ...
-    Pretty Little Girl.mp3
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/albums` | Create new album |
+| GET | `/api/albums` | List all albums |
+| GET | `/api/albums/:id` | Get album by ID |
+| DELETE | `/api/albums/:id` | Delete album |
+| POST | `/api/upload/:albumId` | Upload audio file |
+| GET | `/api/download/:fileId` | Download single file |
+| GET | `/api/download/zip/:albumId` | Download album as ZIP |
+| DELETE | `/api/download/:fileId` | Delete generated file |
+| POST | `/api/cleanup` | Trigger manual cleanup |
+
+## CLI Usage
+
+```bash
+# Split local file
+album-splitter -f album.mp3 -t tracks.txt
+
+# Split from YouTube
+album-splitter -yt https://youtube.com/watch?v=... -t tracks.txt
+
+# With metadata
+album-splitter -f album.mp3 -t tracks.txt -a "Artist" -A "Album" -y 2024
 ```
-These songs are already mp3-tagged with their track name and track number, but not their author or their album, since we have not specified it.
 
-### Splitting and tagging with Author and Album a local file
+## Track List Format
 
-+ I somehow got the file `DogsEatingDogsAlbum.mp3` that I want to split
-+ I set the tracklist in `tracks.txt` (same tracks as before)
-+ I execute `python -m album_splitter --file DogsEatingDogsAlbum.mp3 --album "Dogs Eating Gods" --artist "blink-182" --folder "2012 - Dogs Eating Dogs"`
-+ The software will execute, it will split the album, and mp3-tag each track with the author and the album name I passed as a parameter (as well as track number and name). It will also put the files in the folder I specified with `--folder`
-
-### Specifying a custom output folder
-
-+ Run the script with the `-o` or `--output` flag to specify where the split tracks should be saved:
 ```
-python -m album_splitter -f </path/to/your_file.mp3> -t </path/to/your_tracks.txt> -o </path/to/output/folder>
+00:00 Track 1 Title
+03:45 Track 2 Title
+07:30 Track 3 Title
+11:15 Track 4 Title
 ```
-+ The output folder will be created automatically if it doesn't exist
-+ All split tracks will be saved in the specified location
 
-## Supported formats for the track list (`tracks.txt`)
+## Configuration
 
-These are just some examples, find more in `tracks.txt.example`.
+Environment variables:
 
-* `[hh:]mm:ss - Title`
-* `Title - [hh:]mm:ss`
-* `Title [hh:]mm:ss`
+```bash
+# Database
+DATABASE_URL=postgresql://user:pass@localhost:5432/album_splitter
 
-To just see which data would be extracted from the tracklist use the option `--dry-run`.
+# Redis
+REDIS_HOST=localhost
+REDIS_PORT=6379
 
-## Available Options
+# Frontend
+NEXT_PUBLIC_API_URL=http://localhost:3001
 
-To get the full help and all the available options run `python -m album_splitter --help`
+# Server
+PORT=3001
+NODE_ENV=production
+```
 
-## Need help?
+## Architecture
 
-If you need any help just [create an Issue](https://github.com/crisbal/album-splitter/issues) or send me an email at the address you can find on my profile.
-
-## Updating
-
-To update to use the latest version of album-splitter you can use `python3 -m pip install --upgrade album-splitter`
-
-## Want to help?
-
-If you want to improve the code and submit a pull request, please feel free to do so.
+```
+Frontend (Next.js) → Backend API (NestJS) → Queue (BullMQ/Redis) → Worker → FFmpeg → Storage
+```
 
 ## License
 
-GPL v3
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=crisbal/album-splitter&type=Date)](https://star-history.com/#crisbal/album-splitter&Date)
+GPL-3.0
