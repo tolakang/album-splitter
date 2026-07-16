@@ -12,6 +12,11 @@ WORKDIR /app
 COPY . /app/
 
 # Install Python dependencies
+# Dokploy clones without full git history, so we provide a fallback version
+# for setuptools-scm. Override SETUPTOOLS_SCM_PRETEND_VERSION via env var in
+# dokploy.json to pin a specific version at deploy time.
+ARG SETUPTOOLS_SCM_PRETEND_VERSION=0.0.0
+ENV SETUPTOOLS_SCM_PRETEND_VERSION_FOR_ALBUM_SPLITTER=${SETUPTOOLS_SCM_PRETEND_VERSION}
 RUN pip install --no-cache-dir .
 
 # Create splits directory
