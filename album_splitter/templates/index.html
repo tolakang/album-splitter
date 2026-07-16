@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Album Splitter - Web Interface</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 Album Splitter</h1>
+        <p class="subtitle">Split your audio files into separate tracks</p>
+        
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="flash-messages">
+            {% for message in messages %}
+            <div class="flash">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+        
+        <div class="upload-form">
+            <h2>Upload Audio File</h2>
+            <form action="/upload" method="post" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="audio_file">Select Audio File:</label>
+                    <input type="file" id="audio_file" name="audio_file" accept=".mp3,.wav,.flac,.m4a,.ogg,.aac" required>
+                    <p class="help-text">Supported formats: MP3, WAV, FLAC, M4A, OGG, AAC</p>
+                </div>
+                
+                <div class="form-group">
+                    <label for="tracks_data">Track List (one per line):</label>
+                    <textarea id="tracks_data" name="tracks_data" rows="10" placeholder="00:00 - Track 1&#10;03:30 - Track 2&#10;07:15 - Track 3"></textarea>
+                    <p class="help-text">Format: <code>[hh:]mm:ss - Title</code></p>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="artist">Artist (optional):</label>
+                        <input type="text" id="artist" name="artist" placeholder="Artist name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="album">Album (optional):</label>
+                        <input type="text" id="album" name="album" placeholder="Album name">
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn-primary">Upload & Split</button>
+            </form>
+        </div>
+        
+        {% if jobs %}
+        <div class="jobs-list">
+            <h2>Recent Jobs</h2>
+            {% for job_id, job in jobs.items()|reverse %}
+            <div class="job-item {{ job.status }}">
+                <span class="job-filename">{{ job.filename }}</span>
+                <span class="job-status">{{ job.status }}</span>
+                <a href="/job/{{ job_id }}" class="btn-small">View</a>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Status - Album Splitter</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 Album Splitter</h1>
+        
+        <div class="job-details">
+            <h2>Job Status</h2>
+            <div class="job-info">
+                <p><strong>File:</strong> {{ job.filename }}</p>
+                {% if job.artist %}<p><strong>Artist:</strong> {{ job.artist }}</p>{% endif %}
+                {% if job.album %}<p><strong>Album:</strong> {{ job.album }}</p>{% endif %}
+            </div>
+            
+            <div class="progress-bar">
+                <div class="progress" style="width: {{ job.progress }}%"></div>
+            </div>
+            
+            <p class="status-message">{{ job.message }}</p>
+            
+            {% if job.status == 'completed' %}
+            <div class="download-section">
+                <h3>Download Files</h3>
+                {% for file in job.output_files %}
+                <a href="/download/{{ job_id }}/{{ file.split('/')[-1] }}" class="btn-download">
+                    📥 {{ file.split('/')[-1] }}
+                </a>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            {% if job.status == 'error' %}
+            <div class="error-message">
+                <p>{{ job.message }}</p>
+            </div>
+            {% endif %}
+            
+            <a href="/" class="btn-back">← Back to Upload</a>
+        </div>
+        
+        {% if job.status == 'pending' or job.status == 'processing' %}
+        <script>
+            // Auto-refresh every 2 seconds
+            setTimeout(function() {
+                location.reload();
+            }, 2000);
+        </script>
+        {% endif %}
+    </div>
+</body>
+</html>

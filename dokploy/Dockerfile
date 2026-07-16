@@ -19,15 +19,19 @@ ARG SETUPTOOLS_SCM_PRETEND_VERSION=0.0.0
 ENV SETUPTOOLS_SCM_PRETEND_VERSION_FOR_ALBUM_SPLITTER=${SETUPTOOLS_SCM_PRETEND_VERSION}
 RUN pip install --no-cache-dir .
 
-# Create splits directory
-RUN mkdir -p /app/splits
+# Create necessary directories
+RUN mkdir -p /app/splits /app/uploads /app/output
 
-# Expose port if needed (optional, for future web interface)
-EXPOSE 8000
-
-# Set environment variables
+# Set environment variables for web UI
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
+ENV FLASK_APP=album_splitter.web
+ENV UPLOAD_FOLDER=/app/uploads
+ENV OUTPUT_FOLDER=/app/output
+ENV SECRET_KEY=change-this-in-production
 
-# Default command
-CMD ["album-splitter", "--help"]
+# Expose port for web interface
+EXPOSE 8000
+
+# Default command: run Flask web server
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", "--threads", "2", "album_splitter.web:create_app()"]

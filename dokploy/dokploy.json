@@ -1,32 +1,59 @@
 {
   "name": "album-splitter",
-  "description": "Split single-file MP3 albums into separate tracks. Downloads from YouTube supported.",
+  "description": "Split single-file MP3 albums into separate tracks with web interface",
   "icon": "https://raw.githubusercontent.com/tolakang/album-splitter/master/.github/readme/hero.png",
   "services": [
     {
       "name": "album-splitter",
       "type": "docker",
       "image": "python:3.12-slim",
-      "ports": [],
+      "ports": [
+        {
+          "containerPort": 8000,
+          "hostPort": 8000
+        }
+      ],
       "volumes": [
         {
-          "source": "input",
-          "destination": "/app/input"
+          "source": "uploads",
+          "destination": "/app/uploads"
         },
         {
           "source": "output",
           "destination": "/app/output"
+        },
+        {
+          "source": "splits",
+          "destination": "/app/splits"
         }
       ],
       "environment": [
         {
           "key": "PYTHONUNBUFFERED",
           "value": "1"
+        },
+        {
+          "key": "FLASK_APP",
+          "value": "album_splitter.web"
+        },
+        {
+          "key": "UPLOAD_FOLDER",
+          "value": "/app/uploads"
+        },
+        {
+          "key": "OUTPUT_FOLDER",
+          "value": "/app/output"
+        },
+        {
+          "key": "SECRET_KEY",
+          "value": "change-this-in-production"
         }
       ],
       "commands": [
-        "apt-get update && apt-get install -y ffmpeg git",
-        "cd /app && pip install --no-cache-dir -e ."
+        "apt-get update && apt-get install -y ffmpeg",
+        "cd /app && pip install --no-cache-dir .",
+        "mkdir -p /app/uploads /app/output /app/splits",
+        "gunicorn --bind 0.0.0.0:8000 --workers 4 --threads 2 album_splitter.web:create_app()"
       ]
     }
   ]

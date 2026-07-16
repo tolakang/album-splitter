@@ -6,18 +6,17 @@ services:
       context: ..
       dockerfile: dokploy/Dockerfile
     container_name: album-splitter
+    ports:
+      - "8000:8000"
     volumes:
-      - ./input:/app/input
+      - ./uploads:/app/uploads
       - ./output:/app/output
       - ./splits:/app/splits
     environment:
       - PYTHONUNBUFFERED=1
+      - FLASK_APP=album_splitter.web
+      - UPLOAD_FOLDER=/app/uploads
       - OUTPUT_FOLDER=/app/output
-      - TEMP_FOLDER=/app/input
+      - SECRET_KEY=change-this-in-production
       - LOG_LEVEL=INFO
-    # Run album-splitter with default command to split input files
-    command: >
-      sh -c "ls /app/input/*.mp3 2>/dev/null && for f in /app/input/*.mp3; do
-        echo \"Splitting: $$f\";
-        album-splitter -f \"$$f\" -o /app/splits;
-      done || echo 'No MP3 files found in /app/input/'"
+    restart: unless-stopped

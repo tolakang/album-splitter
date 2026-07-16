@@ -20,7 +20,40 @@ All you need is:
     * `00:06 - When I Was Young`
     * `03:35 Dogs Eating Dogs`
 
-## How to install
+## 🌐 Web Interface
+
+Album Splitter includes a web interface for easy use without the command line.
+
+### Access the Web UI
+
+Once deployed, access the web interface at:
+- **Local:** `http://localhost:8000`
+- **Remote:** `http://your-server-ip:8000`
+
+### Features
+- Upload audio files directly through the browser
+- Enter track timestamps in a user-friendly form
+- Automatic splitting with real-time progress updates
+- Download individual tracks or all files at once
+- Support for metadata (artist, album)
+
+### Quick Start with Docker
+
+```bash
+# Clone the repository
+git clone https://github.com/tolakang/album-splitter.git
+cd album-splitter/dokploy
+
+# Start the web interface
+docker-compose up --build
+
+# Open in browser
+open http://localhost:8000
+```
+
+## How to Install (CLI)
+
+### From PyPI
 
 First time only:
 
@@ -42,17 +75,21 @@ First time only:
     * `python3 -m pip install album-splitter`
 + You are ready to go!
 
-After the first time:
+### From Source
 
-+ Open your terminal app
-+ Activate the virtual environment
-   * Linux/MacOS: `source venv/bin/activate`
-   * Windows: `./venv/Scripts/activate`
-+ Optional, update `album-splitter`:
-    * `python3 -m pip install --upgrade album-splitter`
-+ You are ready to go!
+```bash
+# Clone the repository
+git clone https://github.com/tolakang/album-splitter.git
+cd album-splitter
 
-## Quick guide (from a local album)
+# Install in development mode
+pip install -e .
+
+# Or install web interface dependencies
+pip install -e ".[web]"
+```
+
+## Quick Guide (CLI - Local File)
 
 + Create a copy of the `tracks.txt.example`, rename it as `tracks.txt`
 + Open `tracks.txt`
@@ -67,7 +104,7 @@ After the first time:
 + Wait for the splitting process to complete
 + You will find your tracks in the `./splits/` folder or in your custom output folder if specified
 
-## Quick guide (from a YouTube video)
+## Quick Guide (CLI - YouTube Video)
 
 + Copy the YouTube URL of the album you want to download and split
 + Find in the YouTube comments the tracklist with start-time and title
@@ -140,6 +177,17 @@ To just see which data would be extracted from the tracklist use the option `--d
 ## Available Options
 
 To get the full help and all the available options run `python -m album_splitter --help`
+
+## Web Interface Options
+
+The web interface supports the following environment variables:
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `SECRET_KEY` | Flask secret key | `change-this-in-production` |
+| `UPLOAD_FOLDER` | Upload directory | `/app/uploads` |
+| `OUTPUT_FOLDER` | Output directory | `/app/output` |
+| `PORT` | Server port | `8000` |
 
 ## Need help?
 
