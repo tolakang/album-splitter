@@ -212,14 +212,29 @@
             });
 
             xhr.addEventListener('load', () => {
-                if (xhr.status === 302 || xhr.status === 200) {
-                    // Follow redirect
-                    const redirectUrl = xhr.getResponseHeader('Location') || '/job/' + extractJobId(xhr.responseText);
-                    window.location.href = redirectUrl;
-                } else {
-                    resetForm();
-                    alert('Upload failed. Please try again.');
+                if (xhr.status === 200) {
+                    try {
+                        const data = JSON.parse(xhr.responseText);
+                        if (data.redirect) {
+                            window.location.href = data.redirect;
+                            return;
+                        }
+                        if (data.error) {
+                            resetForm();
+                            alert(data.error);
+                            return;
+                        }
+                    } catch(e) {}
+                } else if (xhr.status === 400) {
+                    try {
+                        const data = JSON.parse(xhr.responseText);
+                        resetForm();
+                        alert(data.error || 'Upload failed');
+                        return;
+                    } catch(e) {}
                 }
+                resetForm();
+                alert('Upload failed. Please try again.');
             });
 
             xhr.addEventListener('error', () => {
@@ -230,11 +245,6 @@
             xhr.open('POST', form.action);
             xhr.send(formData);
         });
-
-        function extractJobId(html) {
-            const match = html.match(/\/job\/([a-f0-9]+)/);
-            return match ? match[1] : '';
-        }
 
         function resetForm() {
             submitBtn.disabled = false;

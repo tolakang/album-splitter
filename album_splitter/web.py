@@ -43,24 +43,28 @@ def index():
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
-    if 'audio_file' not in request.files:
-        flash('No file selected')
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
+    def _err(msg):
+        if is_ajax:
+            return jsonify({'error': msg}), 400
+        flash(msg)
         return redirect(url_for('index'))
+
+    if 'audio_file' not in request.files:
+        return _err('No file selected')
 
     file = request.files['audio_file']
     if file.filename == '':
-        flash('No file selected')
-        return redirect(url_for('index'))
+        return _err('No file selected')
 
     if not file or not allowed_file(file.filename):
-        flash('Invalid file type. Allowed: ' + ', '.join(sorted(ALLOWED_EXTENSIONS)))
-        return redirect(url_for('index'))
+        return _err('Invalid file type. Allowed: ' + ', '.join(sorted(ALLOWED_EXTENSIONS)))
 
     # Validate tracks data
     tracks_data = request.form.get('tracks_data', '').strip()
     if not tracks_data:
-        flash('Please enter at least one track timestamp')
-        return redirect(url_for('index'))
+        return _err('Please enter at least one track timestamp')
 
     job_id = str(uuid.uuid4())[:8]
     job_folder = os.path.join(UPLOAD_FOLDER, job_id)
@@ -74,8 +78,7 @@ def upload_file():
     file_size = os.path.getsize(filepath)
     if file_size > MAX_FILE_SIZE:
         os.remove(filepath)
-        flash(f'File too large. Maximum size is {MAX_FILE_SIZE // (1024*1024)}MB')
-        return redirect(url_for('index'))
+        return _err(f'File too large. Maximum size is {MAX_FILE_SIZE // (1024*1024)}MB')
 
     artist = request.form.get('artist', '').strip()
     album = request.form.get('album', '').strip()
@@ -106,6 +109,9 @@ def upload_file():
         daemon=True,
     )
     thread.start()
+
+    if is_ajax:
+        return jsonify({'job_id': job_id, 'redirect': url_for('job_status', job_id=job_id)})
 
     return redirect(url_for('job_status', job_id=job_id))
 
