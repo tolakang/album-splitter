@@ -1,13 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { QueueService } from './queue/queue.service';
 
 async function bootstrap() {
   const app = await NestFactory.createApplicationContext(AppModule);
   
-  console.log('🔧 Worker started, listening for jobs...');
+  console.log('Worker started, listening for jobs...');
   
-  // The worker is initialized by the BullMQ processor
   // Keep the process alive
   process.on('SIGTERM', async () => {
     console.log('SIGTERM received, shutting down worker...');
