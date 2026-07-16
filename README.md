@@ -1,6 +1,6 @@
 # album-splitter
 
-Use **album-splitter** to automatically split any audio file (youtube videos, albums, podcasts, audiobooks, tapes, vinyls) into separate tracks starting from timestamps. album-splitter will also take care of tagging each part with the correct metadata. If your file is on YouTube, you can download it automatically.
+Use **album-splitter** to automatically split any audio file (youtube videos, albums, podcasts, audiobooks, tapes, vinyls) into separate tracks starting from timestamps. album-splitter will also tag each track with its metadata.
 
 <p align="center">
     <img src='.github/readme/hero.png' width='500px'>
@@ -36,8 +36,8 @@ First time only:
 + Create a virtual environment
     * `python3 -m venv venv`
 + Activate the virtual environment
-  * Linux/MacOS: `source venv/bin/activate`
-  * Windows: `./venv/Scripts/activate`
+   * Linux/MacOS: `source venv/bin/activate`
+   * Windows: `./venv/Scripts/activate`
 + Install album-splitter
     * `python3 -m pip install album-splitter`
 + You are ready to go!
@@ -46,8 +46,8 @@ After the first time:
 
 + Open your terminal app
 + Activate the virtual environment
-  * Linux/MacOS: `source venv/bin/activate`
-  * Windows: `./venv/Scripts/activate`
+   * Linux/MacOS: `source venv/bin/activate`
+   * Windows: `./venv/Scripts/activate`
 + Optional, update `album-splitter`:
     * `python3 -m pip install --upgrade album-splitter`
 + You are ready to go!
@@ -62,9 +62,10 @@ After the first time:
     * See *Examples* section, many other formats supported
 + Run the script
     * Basic usage: `python -m album_splitter --file <path/to/your/album.mp3>`
+    * With custom output folder: `python -m album_splitter -f </path/to/your_file.mp3> -t </path/to/your_tracks.txt> -o </path/to/output/folder>`
     * More in the *Examples* section
 + Wait for the splitting process to complete
-+ You will find your tracks in the `./splits/` folder
++ You will find your tracks in the `./splits/` folder or in your custom output folder if specified
 
 ## Quick guide (from a YouTube video)
 
@@ -84,9 +85,9 @@ After the first time:
 
 ## Output Format
 
-The format of the output tracks is the same as the format of the input (same extension, same codec, same bitrate, ...), it simply does a copy of the codec. If you want to convert the output tracks to a different format, you can do this using additional tools.
+The format of the output tracks is the same as the format of the input (same extension, same codec, same bitrate, ...), it simply does a copy of the codec. If you want to convert the output tracks to a different format you can do so, but album-splitter won't do it for you.
 
-For example to convert from `.wav` to `.mp3` you can use FFmpeg. [Here](https://stackoverflow.com/a/41207442) is how you can do it on Linux/macOS. [This](https://sourceforge.net/projects/ffmpeg-batch/) or [this](https://stackoverflow.com/a/56244203) might help for Windows instead. You can adopt such snippets to do other processing, such as changing the bitrate.
+For example to convert from `.wav` to `.mp3` you can use FFmpeg. [Here](https://stackoverflow.com/a/41207442) is how you can do it on Linux/macOS. [This](https://sourceforge.net/projects/ffmpeg-batch/) is a GUI option for Windows.
 
 ## Examples
 
@@ -115,7 +116,16 @@ These songs are already mp3-tagged with their track name and track number, but n
 + I somehow got the file `DogsEatingDogsAlbum.mp3` that I want to split
 + I set the tracklist in `tracks.txt` (same tracks as before)
 + I execute `python -m album_splitter --file DogsEatingDogsAlbum.mp3 --album "Dogs Eating Gods" --artist "blink-182" --folder "2012 - Dogs Eating Dogs"`
-+ The software will execute, it will split the album, and mp3-tag each track with the author and the album name I passed as a parameter (as well as track number and name). It will also put the files in the folder passed as an argument (instead of putting them in the default `./splits` folder)
++ The software will execute, it will split the album, and mp3-tag each track with the author and the album name I passed as a parameter (as well as track number and name). It will also put the files in the folder I specified with `--folder`
+
+### Specifying a custom output folder
+
++ Run the script with the `-o` or `--output` flag to specify where the split tracks should be saved:
+```
+python -m album_splitter -f </path/to/your_file.mp3> -t </path/to/your_tracks.txt> -o </path/to/output/folder>
+```
++ The output folder will be created automatically if it doesn't exist
++ All split tracks will be saved in the specified location
 
 ## Supported formats for the track list (`tracks.txt`)
 
