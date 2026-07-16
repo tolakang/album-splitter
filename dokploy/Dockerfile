@@ -12,7 +12,7 @@ WORKDIR /app
 COPY . /app/
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -e .
+RUN pip install --no-cache-dir .
 
 # Create splits directory
 RUN mkdir -p /app/splits
