@@ -25,15 +25,17 @@ enum TaskStatus {
 }
 
 model Album {
-  id          String      @id @default(uuid())
-  title       String?
-  youtubeUrl  String?     @map("youtube_url")
-  status      AlbumStatus @default(PENDING)
-  progress    Int         @default(0)
-  errorMessage String?    @map("error_message")
-  createdAt   DateTime    @default(now()) @map("created_at")
-  updatedAt   DateTime    @updatedAt @map("updated_at")
-  expiresAt   DateTime?   @map("expires_at")
+  id           String      @id @default(uuid())
+  title        String?
+  youtubeUrl   String?     @map("youtube_url")
+  audioPath    String?     @map("audio_path")
+  tracksJson   String?     @map("tracks_json")
+  status       AlbumStatus @default(PENDING)
+  progress     Int         @default(0)
+  errorMessage String?     @map("error_message")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+  expiresAt    DateTime?   @default(now() + interval 1 hour) @map("expires_at")
 
   tasks          Task[]
   generatedFiles GeneratedFile[]
@@ -63,11 +65,11 @@ model GeneratedFile {
   albumId      String   @map("album_id")
   filename     String
   originalName String?  @map("original_name")
-  size         BigInt
+  size         Int      @default(0)
   path         String
   downloaded   Boolean  @default(false)
   createdAt    DateTime @default(now()) @map("created_at")
-  expiresAt    DateTime @map("expires_at")
+  expiresAt    DateTime @default(now() + interval 1 hour) @map("expires_at")
 
   album Album @relation(fields: [albumId], references: [id], onDelete: Cascade)
 
