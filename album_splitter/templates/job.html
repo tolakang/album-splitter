@@ -8,50 +8,143 @@
 </head>
 <body>
     <div class="container">
-        <h1>🎵 Album Splitter</h1>
-        
+        <header>
+            <h1>🎵 Album Splitter</h1>
+        </header>
+
         <div class="job-details">
-            <h2>Job Status</h2>
-            <div class="job-info">
-                <p><strong>File:</strong> {{ job.filename }}</p>
-                {% if job.artist %}<p><strong>Artist:</strong> {{ job.artist }}</p>{% endif %}
-                {% if job.album %}<p><strong>Album:</strong> {{ job.album }}</p>{% endif %}
+            <div class="job-header">
+                <h2>{{ job.filename }}</h2>
+                <div class="job-meta">
+                    {% if job.artist %}<span class="meta-tag">🎤 {{ job.artist }}</span>{% endif %}
+                    {% if job.album %}<span class="meta-tag">💿 {{ job.album }}</span>{% endif %}
+                    {% if job.track_count %}<span class="meta-tag">🎵 {{ job.track_count }} tracks</span>{% endif %}
+                </div>
             </div>
-            
-            <div class="progress-bar">
-                <div class="progress" style="width: {{ job.progress }}%"></div>
+
+            <!-- Progress Section -->
+            <div id="progressSection">
+                <div class="progress-track-large">
+                    <div id="progressBar" class="progress-fill" style="width: {{ job.progress }}%"></div>
+                </div>
+                <div class="progress-info">
+                    <span id="statusMessage" class="status-text">{{ job.message }}</span>
+                    <span id="progressPercent" class="status-pct">{{ job.progress }}%</span>
+                </div>
             </div>
-            
-            <p class="status-message">{{ job.message }}</p>
-            
-            {% if job.status == 'completed' %}
-            <div class="download-section">
-                <h3>Download Files</h3>
-                {% for file in job.output_files %}
-                <a href="/download/{{ job_id }}/{{ file.split('/')[-1] }}" class="btn-download">
-                    📥 {{ file.split('/')[-1] }}
-                </a>
-                {% endfor %}
+
+            <!-- Download Section (hidden until complete) -->
+            <div id="downloadSection" class="download-section" style="{{ 'display:block' if job.status == 'completed' else 'display:none' }}">
+                <div class="download-header">
+                    <h3>✅ Split Complete</h3>
+                    <a href="/download/{{ job_id }}/zip" class="btn-zip">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        Download All (.zip)
+                    </a>
+                </div>
+                <div id="fileList" class="file-list">
+                    {% for file in job.output_files %}
+                    <a href="/download/{{ job_id }}/{{ file }}" class="file-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <path d="M9 18V5l12-2v13"/>
+                            <circle cx="6" cy="18" r="3"/>
+                            <circle cx="18" cy="16" r="3"/>
+                        </svg>
+                        <span class="file-name">{{ file }}</span>
+                        <svg class="download-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                    </a>
+                    {% endfor %}
+                </div>
             </div>
-            {% endif %}
-            
-            {% if job.status == 'error' %}
-            <div class="error-message">
-                <p>{{ job.message }}</p>
+
+            <!-- Error Section (hidden until error) -->
+            <div id="errorSection" class="error-message" style="{{ 'display:block' if job.status == 'error' else 'display:none' }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="15" y1="9" x2="9" y2="15"/>
+                    <line x1="9" y1="9" x2="15" y2="15"/>
+                </svg>
+                <span id="errorMessage">{{ job.message }}</span>
             </div>
-            {% endif %}
-            
-            <a href="/" class="btn-back">← Back to Upload</a>
+
+            <div class="job-actions">
+                <a href="/" class="btn-back">← New Split</a>
+            </div>
         </div>
-        
-        {% if job.status == 'pending' or job.status == 'processing' %}
-        <script>
-            // Auto-refresh every 2 seconds
-            setTimeout(function() {
-                location.reload();
-            }, 2000);
-        </script>
-        {% endif %}
     </div>
+
+    <script>
+    (function() {
+        const jobId = '{{ job_id }}';
+        const progressBar = document.getElementById('progressBar');
+        const statusMessage = document.getElementById('statusMessage');
+        const progressPercent = document.getElementById('progressPercent');
+        const downloadSection = document.getElementById('downloadSection');
+        const errorSection = document.getElementById('errorSection');
+        const fileList = document.getElementById('fileList');
+        const progressSection = document.getElementById('progressSection');
+
+        let currentStatus = '{{ job.status }}';
+
+        function pollStatus() {
+            fetch('/api/job/' + jobId)
+                .then(r => r.json())
+                .then(data => {
+                    // Update progress
+                    progressBar.style.width = data.progress + '%';
+                    progressPercent.textContent = data.progress + '%';
+                    statusMessage.textContent = data.message;
+
+                    if (data.status !== currentStatus) {
+                        currentStatus = data.status;
+
+                        if (data.status === 'completed') {
+                            progressSection.style.display = 'none';
+                            downloadSection.style.display = 'block';
+                            document.title = '✅ ' + data.filename + ' - Album Splitter';
+
+                            // Populate file list
+                            if (data.output_files && data.output_files.length) {
+                                fileList.innerHTML = data.output_files.map(f =>
+                                    `<a href="/download/${jobId}/${f}" class="file-item">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                                            <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+                                        </svg>
+                                        <span class="file-name">${f}</span>
+                                        <svg class="download-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                                        </svg>
+                                    </a>`
+                                ).join('');
+                            }
+                        } else if (data.status === 'error') {
+                            progressSection.style.display = 'none';
+                            errorSection.style.display = 'flex';
+                            document.getElementById('errorMessage').textContent = data.message;
+                            document.title = '❌ Error - Album Splitter';
+                        }
+                    }
+                })
+                .catch(() => {})
+                .then(() => {
+                    if (currentStatus === 'pending' || currentStatus === 'processing') {
+                        setTimeout(pollStatus, 1500);
+                    }
+                });
+        }
+
+        if (currentStatus === 'pending' || currentStatus === 'processing') {
+            pollStatus();
+        }
+    })();
+    </script>
 </body>
 </html>
