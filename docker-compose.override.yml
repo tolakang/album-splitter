@@ -1,0 +1,10 @@
+services:
+  backend:
+    volumes:
+      - ./packages/backend/src:/app/src
+    command: npm run start:dev
+  
+  frontend:
+    volumes:
+      - ./packages/frontend/src:/app/src
+    command: npm run dev
