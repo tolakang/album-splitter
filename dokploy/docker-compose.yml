@@ -1,16 +1,125 @@
-version: '3.8'
-
 services:
-  album-splitter:
+  frontend:
     build:
-      context: ..
-      dockerfile: dokploy/Dockerfile
-    container_name: album-splitter
-    volumes:
-      - ./input:/app/input
-      - ./output:/app/output
-      - ./splits:/app/splits
+      context: ../packages/frontend
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=/api
     environment:
-      - PYTHONUNBUFFERED=1
-    # Uncomment to run specific commands
-    # command: python -m album_splitter --file /app/input/album.mp3
+      - NEXT_PUBLIC_API_URL=/api
+    expose:
+      - "3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - dokploy-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.album-frontend.rule=Host(`${FRONTEND_HOST:-${FRONTEND_DOMAIN}}`)"
+      - "traefik.http.routers.album-frontend.entrypoints=web,websecure"
+      - "traefik.http.services.album-frontend.loadbalancer.server.port=${FRONTEND_PORT}"
+      - "traefik.http.routers.album-frontend.tls=true"
+      - "traefik.http.routers.album-frontend.service=album-frontend"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  backend:
+    build:
+      context: ../packages/backend
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-album_splitter}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+      - NODE_ENV=production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - album-storage:/app/storage
+    networks:
+      - dokploy-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.album-backend.rule=Host(`${BACKEND_HOST:-${BACKEND_DOMAIN}}`)"
+      - "traefik.http.routers.album-backend.entrypoints=web,websecure"
+      - "traefik.http.services.album-backend.loadbalancer.server.port=${BACKEND_PORT}"
+      - "traefik.http.routers.album-backend.tls=true"
+      - "traefik.http.routers.album-backend.service=album-backend"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  worker:
+    build:
+      context: ../packages/backend
+      dockerfile: Dockerfile
+    command: node dist/worker.js
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-album_splitter}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - NODE_ENV=production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - album-storage:/app/storage
+    networks:
+      - dokploy-network
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-album_splitter}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - dokploy-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    networks:
+      - dokploy-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  redis-data:
+  album-storage:
+
+networks:
+  dokploy-network:
+    external: true

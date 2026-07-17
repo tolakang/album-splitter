@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum AlbumStatus {
+  PENDING
+  DOWNLOADING
+  PARSING
+  SPLITTING
+  COMPLETED
+  FAILED
+}
+
+enum TaskStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model Album {
+  id           String      @id @default(uuid())
+  title        String?
+  youtubeUrl   String?     @map("youtube_url")
+  audioPath    String?     @map("audio_path")
+  tracksJson   String?     @map("tracks_json")
+  status       AlbumStatus @default(PENDING)
+  progress     Int         @default(0)
+  errorMessage String?     @map("error_message")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+  expiresAt    DateTime?   @default(dbgenerated("now() + interval '1 hour'")) @map("expires_at")
+
+  tasks          Task[]
+  generatedFiles GeneratedFile[]
+
+  @@map("albums")
+}
+
+model Task {
+  id          String     @id @default(uuid())
+  albumId     String     @map("album_id")
+  status      TaskStatus @default(PENDING)
+  progress    Int        @default(0)
+  queueId     String?    @map("queue_id")
+  workerId    String?    @map("worker_id")
+  attempts    Int        @default(0)
+  maxAttempts Int        @default(3) @map("max_attempts")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  album Album @relation(fields: [albumId], references: [id], onDelete: Cascade)
+
+  @@map("tasks")
+}
+
+model GeneratedFile {
+  id           String   @id @default(uuid())
+  albumId      String   @map("album_id")
+  filename     String
+  originalName String?  @map("original_name")
+  size         Int      @default(0)
+  path         String
+  downloaded   Boolean  @default(false)
+  createdAt    DateTime @default(now()) @map("created_at")
+  expiresAt    DateTime @default(dbgenerated("now() + interval '1 hour'")) @map("expires_at")
+
+  album Album @relation(fields: [albumId], references: [id], onDelete: Cascade)
+
+  @@map("generated_files")
+}

@@ -1,91 +1,169 @@
-# Dokploy Deployment Guide for Album Splitter
+# Dokploy Deployment Guide — Album Splitter (Web UI)
 
-This directory contains all necessary files to deploy Album Splitter using Dokploy.
+Full-stack deployment using Docker Compose with 5 services: frontend, backend, worker, PostgreSQL, and Redis.
 
-## Files Included
+## Architecture
 
-- **Dockerfile** - Container image definition with Python 3.12, FFmpeg, and album-splitter installed
-- **docker-compose.yml** - Docker Compose configuration for local development and testing
-- **dokploy.json** - Dokploy service configuration
-- **.dockerignore** - Files to exclude from Docker build
-- **.env.example** - Environment variables template
-- **README.md** - This file
+```
+┌─────────────┐     ┌──────────────┐     ┌──────────────┐
+│   Frontend   │────▶│   Backend    │────▶│    Worker    │
+│  (Next.js)   │     │   (NestJS)   │     │  (BullMQ)    │
+│   :3000      │     │   :3001      │     │              │
+└─────────────┘     └──────┬───────┘     └──────┬───────┘
+                           │                     │
+                    ┌──────▼───────┐     ┌──────▼───────┐
+                    │  PostgreSQL  │     │    Redis     │
+                    │   :5432      │     │   :6379      │
+                    └──────────────┘     └──────────────┘
+```
 
-## Quick Start
+## Files
+
+| File | Purpose |
+|------|---------|
+| `docker-compose.yml` | Multi-service Docker Compose (frontend + backend + worker + postgres + redis) |
+| `.env.example` | Environment variables template |
+
+The backend and frontend Dockerfiles are in `packages/backend/Dockerfile` and `packages/frontend/Dockerfile`.
+
+## Step-by-Step Dokploy Deployment
 
 ### Prerequisites
-- Docker and Docker Compose installed
-- Or Dokploy installed on your server
+- A Dokploy server running (v0.5.0+)
+- A GitHub account with the `tolakang/album-splitter` repository
+- The `tolakang-web-ui-dev` branch pushed to GitHub
 
-### Local Development with Docker Compose
+### Step 1: Create a Docker Compose Application in Dokploy
 
-1. Create input and output directories:
-```bash
-mkdir -p input output splits
+1. Log into your Dokploy dashboard
+2. Go to **Project** → **Create Application** (or **Create Compose**)
+3. Name it `album-splitter`
+4. Select **Docker Compose** as the application type
+
+### Step 2: Configure Source
+
+Under the **General** tab:
+
+| Setting | Value |
+|---------|-------|
+| **Provider** | GitHub |
+| **Repository** | `tolakang/album-splitter` (or your fork) |
+| **Branch** | `tolakang-web-ui-dev` |
+| **Compose Path** | `./dokploy/docker-compose.yml` |
+| **Trigger Type** | On Push |
+| **Autodeploy** | Enable (optional) |
+
+Click **Save**.
+
+### Step 3: Configure Environment Variables
+
+Go to the **Environment** tab and paste:
+
+```
+# Database
+POSTGRES_DB=album_splitter
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=changeme
+
+# Redis
+REDIS_HOST=redis
+REDIS_PORT=6379
+
+# Application Domains (NO protocol, just hostname)
+FRONTEND_DOMAIN=<YOUR_DOMAIN>
+BACKEND_DOMAIN=api.<YOUR_DOMAIN>
+
+# Optional: Sanitized domain overrides (leave blank normally)
+FRONTEND_HOST=
+BACKEND_HOST=
+
+# Application Ports (container ports)
+FRONTEND_PORT=3000
+BACKEND_PORT=3001
+
+# Backend
+NODE_ENV=production
+FRONTEND_URL=https://<YOUR_DOMAIN>
+
+# Frontend
+NEXT_PUBLIC_API_URL=/api
 ```
 
-2. Place your audio files in the `input` folder and `tracks.txt` in the same folder
+**Important:**
+- `POSTGRES_PASSWORD`: Change to a secure password
+- `FRONTEND_DOMAIN` & `BACKEND_DOMAIN`: **Plain hostnames ONLY** (no `https://`, no protocol). Example: `album.example.com`
+- `FRONTEND_URL`: Must be the **full public URL** including protocol (e.g., `https://album.example.com`). Backend uses this for CORS.
+- `NEXT_PUBLIC_API_URL`: Must stay as `/api` (relative path) for deployment to work
+- `FRONTEND_HOST` & `BACKEND_HOST`: Leave blank; use only if `FRONTEND_DOMAIN`/`BACKEND_DOMAIN` accidentally include a scheme
 
-3. Run with Docker Compose:
-```bash
-docker-compose up --build
-```
+Click **Save**.
 
-4. Your split tracks will appear in the `output` folder
+### Step 4: Configure Domain
 
-### Deploy to Dokploy
+Go to the **Domains** tab:
 
-1. Copy all files from this directory to your Dokploy server
+1. Click **Add Domain**
+2. Enter your domain: `<YOUR_DOMAIN>`
+3. Set the port to `3000` (frontend container port — NOT the host port)
+4. Enable **HTTPS** (Let's Encrypt) if available
+5. Save
 
-2. Configure your Dokploy instance with the provided `dokploy.json` configuration
+For the backend, you have two options:
+- **Option A**: Use the frontend as a proxy (recommended) — the Next.js rewrites handle `/api/*` → backend
+- **Option B**: Add a second domain on port `3001` for direct backend access
 
-3. Set environment variables in `.env` based on `.env.example`
+### Step 5: Deploy
 
-4. Deploy using Dokploy's CLI or web interface
+1. Go to the **General** tab
+2. Click **Deploy**
+3. Wait for the build to complete (first build takes 3-5 minutes)
+4. Check the **Logs** tab for any errors
 
-## Docker Build
+### Step 6: Verify
 
-To build manually:
-```bash
-docker build -f dokploy/Dockerfile -t album-splitter:latest .
-```
-
-To run a container:
-```bash
-docker run -v $(pwd)/input:/app/input \
-           -v $(pwd)/output:/app/output \
-           album-splitter:latest \
-           python -m album_splitter --file /app/input/album.mp3
-```
-
-## Volume Mounts
-
-The deployment uses the following volumes:
-
-- `/app/input` - Input audio files directory
-- `/app/output` - Output directory for split tracks
-- `/app/splits` - Alternative output directory (kept for compatibility)
-
-## Environment Variables
-
-See `.env.example` for available configuration options.
+1. Visit `https://<YOUR_DOMAIN>`
+2. The frontend should load
+3. Test uploading an audio file
+4. Check the backend health: `https://<YOUR_DOMAIN>/api/health`
 
 ## Troubleshooting
 
-### FFmpeg not found
-Make sure FFmpeg is installed in the container. The Dockerfile includes this, but verify the build was successful.
+### Build fails with "NEXT_PUBLIC_API_URL not defined"
+Make sure `NEXT_PUBLIC_API_URL=/api` is set in the Dokploy **Environment** tab. Next.js requires this at build time.
 
-### Permission denied errors
-Ensure the container has read/write permissions for mounted volumes:
+### Frontend loads but API calls fail (404/500)
+1. Check backend is running: `docker compose ps` in the terminal
+2. Check backend logs in Dokploy → Logs → select `backend` container
+3. Verify `FRONTEND_URL` matches your actual domain (for CORS)
+
+### "No such container" error in Logs
+This means no containers are deployed yet. Click **Deploy** in the General tab.
+
+### Database connection errors
+1. Ensure PostgreSQL container is healthy (check Logs → postgres)
+2. The `DATABASE_URL` is auto-built from `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`
+3. Prisma migrations run automatically on backend startup
+
+### Large file upload fails (413 / 502)
+The upload limit is 500MB. If using a reverse proxy (nginx/Caddy), increase `client_max_body_size`.
+
+### FFmpeg errors during splitting
+The backend Dockerfile installs FFmpeg. If splitting fails, check worker logs for the specific error.
+
+## Local Development with Docker Compose
+
 ```bash
-chmod 777 input output splits
+cd dokploy
+cp .env.example .env
+docker compose up --build
 ```
 
-### Out of memory
-For large audio files, you may need to increase Docker's memory limit.
+Access:
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:3001/api
+- Swagger docs: http://localhost:3001/api/docs
 
 ## Support
 
-For issues related to Album Splitter functionality, see: https://github.com/tolakang/album-splitter/issues
-
-For Dokploy-specific issues, see: https://dokploy.com/docs
+- Issues: https://github.com/tolakang/album-splitter/issues
+- Dokploy docs: https://dokploy.com/docs
