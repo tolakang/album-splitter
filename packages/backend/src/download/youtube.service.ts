@@ -8,7 +8,7 @@ import { pipeline } from 'stream/promises';
 
 @Injectable()
 export class YouTubeDownloadService {
-  private readonly logger = new Logger(YouTubeService.name);
+  private readonly logger = new Logger(YouTubeDownloadService.name);
 
   async download(url: string, outputDir: string): Promise<string> {
     if (!ytdl.validateURL(url)) {
