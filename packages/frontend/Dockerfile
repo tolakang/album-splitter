@@ -30,5 +30,5 @@ COPY --from=builder /app/public ./public
 # Expose port
 EXPOSE 3000
 
-# Start application
-CMD ["node", "server.js"]
+# Start application - bind to 0.0.0.0 so healthcheck works inside container (IPv6 support)
+CMD ["node", "server.js", "--hostname", "0.0.0.0"]
