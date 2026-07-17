@@ -16,7 +16,7 @@ services:
       - dokploy-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.album-frontend.rule=Host(`${FRONTEND_DOMAIN}`)"
+      - "traefik.http.routers.album-frontend.rule=Host(`${FRONTEND_HOST:-${FRONTEND_DOMAIN}}`)"
       - "traefik.http.routers.album-frontend.entrypoints=web,websecure"
       - "traefik.http.services.album-frontend.loadbalancer.server.port=${FRONTEND_PORT}"
       - "traefik.http.routers.album-frontend.tls=true"
@@ -50,7 +50,7 @@ services:
       - dokploy-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.album-backend.rule=Host(`${BACKEND_DOMAIN}`)"
+      - "traefik.http.routers.album-backend.rule=Host(`${BACKEND_HOST:-${BACKEND_DOMAIN}}`)"
       - "traefik.http.routers.album-backend.entrypoints=web,websecure"
       - "traefik.http.services.album-backend.loadbalancer.server.port=${BACKEND_PORT}"
       - "traefik.http.routers.album-backend.tls=true"
