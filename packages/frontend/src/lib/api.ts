@@ -1,6 +1,6 @@
 import { Album, CreateAlbumRequest, GeneratedFile, SplitRequest, SplitResponse } from '@/types';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || '';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 function extractErrorMessage(error: any): string {
   if (error?.message && Array.isArray(error.message)) {
