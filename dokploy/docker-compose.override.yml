@@ -1,0 +1,40 @@
+# Local development overrides — hot reload, port mappings, no Traefik
+# This file is automatically loaded by `docker compose up` alongside docker-compose.yml
+# For production (Dokploy), use only docker-compose.yml
+
+services:
+  frontend:
+    build:
+      context: ../packages/frontend
+      dockerfile: Dockerfile
+      target: builder
+      args:
+        - NEXT_PUBLIC_API_URL=/api
+    environment:
+      - NEXT_PUBLIC_API_URL=/api
+      - BACKEND_URL=http://localhost:3001
+      - NODE_ENV=development
+    ports:
+      - "3000:3000"
+    networks:
+      - dokploy-network
+    labels: []
+    command: npm run dev
+
+  backend:
+    build:
+      context: ../packages/backend
+      dockerfile: Dockerfile
+      target: builder
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-album_splitter}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-changeme}
+      - FRONTEND_URL=http://localhost:3000
+      - NODE_ENV=development
+    ports:
+      - "3001:3001"
+    networks:
+      - dokploy-network
+    command: npm run start:dev

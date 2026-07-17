@@ -21,9 +21,9 @@ Full-stack deployment using Docker Compose with 6 services: frontend, backend, w
 
 | File | Purpose |
 |------|---------|
-| `docker-compose.yml` | Multi-service Docker Compose (frontend + backend + worker + postgres + redis + migrate) |
+| `docker-compose.yml` | Production Docker Compose (frontend + backend + worker + postgres + redis + migrate) |
+| `docker-compose.override.yml` | Local development overrides (hot reload, port mappings, no Traefik) |
 | `.env.example` | Environment variables template |
-| `docker-compose.override.yml` | Local development overrides (hot reload) |
 
 The backend and frontend Dockerfiles are in `packages/backend/Dockerfile` and `packages/frontend/Dockerfile`.
 
@@ -71,17 +71,8 @@ REDIS_HOST=redis
 REDIS_PORT=6379
 REDIS_PASSWORD=changeme
 
-# Application Domains (NO protocol, just hostname)
+# Application Domain (NO protocol, just hostname)
 FRONTEND_DOMAIN=<YOUR_DOMAIN>
-BACKEND_DOMAIN=api.<YOUR_DOMAIN>
-
-# Optional: Sanitized domain overrides (leave blank normally)
-FRONTEND_HOST=
-BACKEND_HOST=
-
-# Application Ports (container ports)
-FRONTEND_PORT=3000
-BACKEND_PORT=3001
 
 # Backend
 NODE_ENV=production
@@ -95,10 +86,9 @@ BACKEND_URL=http://backend:3001
 **Important:**
 - `POSTGRES_PASSWORD`: Change to a secure password
 - `REDIS_PASSWORD`: Change to a secure password (required for Redis authentication)
-- `FRONTEND_DOMAIN` & `BACKEND_DOMAIN`: **Plain hostnames ONLY** (no `https://`, no protocol). Example: `album.example.com`
+- `FRONTEND_DOMAIN`: **Plain hostname ONLY** (no `https://`, no protocol). Example: `album.example.com`
 - `FRONTEND_URL`: Must be the **full public URL** including protocol (e.g., `https://album.example.com`). Backend uses this for CORS.
 - `NEXT_PUBLIC_API_URL`: Must stay as `/api` (relative path) for deployment to work
-- `FRONTEND_HOST` & `BACKEND_HOST`: Leave blank; use only if `FRONTEND_DOMAIN`/`BACKEND_DOMAIN` accidentally include a scheme
 - `BACKEND_URL`: Internal backend URL for frontend (default: `http://backend:3001`)
 
 Click **Save**.
@@ -109,7 +99,7 @@ Go to the **Domains** tab:
 
 1. Click **Add Domain**
 2. Enter your domain: `<YOUR_DOMAIN>`
-3. Set the port to `3000` (frontend container port — NOT the host port)
+3. Set the port to `3000` (frontend container port)
 4. Enable **HTTPS** (Let's Encrypt) if available
 5. Save
 
@@ -140,7 +130,7 @@ All services have memory and CPU limits:
 - Worker: 4G memory, 2.0 CPUs
 
 ### Health Checks
-Node-based healthchecks for reliable monitoring (replaces wget-based checks).
+Node-based healthchecks using `fetch()` for reliable monitoring — no `wget` dependency required.
 
 ### Log Rotation
 Automatic log rotation to prevent disk fill:
@@ -168,6 +158,9 @@ Make sure `NEXT_PUBLIC_API_URL=/api` is set in the Dokploy **Environment** tab. 
 2. Check backend logs in Dokploy → Logs → select `backend` container
 3. Verify `FRONTEND_URL` matches your actual domain (for CORS)
 
+### Health check failures
+The healthchecks use Node.js `fetch()` (not `wget`). Make sure the frontend/backend containers can reach their own ports. Check container logs for connection errors.
+
 ### "No such container" error in Logs
 This means no containers are deployed yet. Click **Deploy** in the General tab.
 
@@ -192,6 +185,11 @@ cd dokploy
 cp .env.example .env
 docker compose up --build
 ```
+
+The `docker-compose.override.yml` automatically provides:
+- Hot reload for frontend (port 3000) and backend (port 3001)
+- Direct port mappings (no Traefik)
+- Development mode environment variables
 
 Access:
 - Frontend: http://localhost:3000
