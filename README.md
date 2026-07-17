@@ -56,7 +56,7 @@ cd dokploy-new
 docker compose up -d
 
 # Access:
-# - Frontend: http://localhost:3000
+# - Frontend: http://localhost:8080
 # - Backend API: http://localhost:3001
 # - Swagger Docs: http://localhost:3001/api/docs
 ```
