@@ -4,8 +4,6 @@ WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
-COPY prisma ./prisma/
-COPY prisma.config.ts ./prisma.config.ts
 
 # Install production dependencies only
 RUN npm ci --only=production
@@ -42,10 +40,12 @@ RUN apk add --no-cache ffmpeg
 # Copy production dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
 
-# Copy built application
+# Copy built application and Prisma files
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/prisma ./prisma/
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/docker-entrypoint.sh ./
 
@@ -55,5 +55,5 @@ RUN mkdir -p /app/storage/uploads /app/storage/generated /app/storage/temp /app/
 # Expose port
 EXPOSE 3001
 
-# Start application with migrations
+# Start application
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
