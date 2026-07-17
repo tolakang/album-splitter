@@ -1,6 +1,6 @@
 # Dokploy Deployment Guide — Album Splitter (Web UI)
 
-Full-stack deployment using Docker Compose with 5 services: frontend, backend, worker, PostgreSQL, and Redis.
+Full-stack deployment using Docker Compose with 6 services: frontend, backend, worker, PostgreSQL, Redis, and migration.
 
 ## Architecture
 
@@ -21,8 +21,9 @@ Full-stack deployment using Docker Compose with 5 services: frontend, backend, w
 
 | File | Purpose |
 |------|---------|
-| `docker-compose.yml` | Multi-service Docker Compose (frontend + backend + worker + postgres + redis) |
+| `docker-compose.yml` | Multi-service Docker Compose (frontend + backend + worker + postgres + redis + migrate) |
 | `.env.example` | Environment variables template |
+| `docker-compose.override.yml` | Local development overrides (hot reload) |
 
 The backend and frontend Dockerfiles are in `packages/backend/Dockerfile` and `packages/frontend/Dockerfile`.
 
@@ -31,7 +32,7 @@ The backend and frontend Dockerfiles are in `packages/backend/Dockerfile` and `p
 ### Prerequisites
 - A Dokploy server running (v0.5.0+)
 - A GitHub account with the `tolakang/album-splitter` repository
-- The `tolakang-web-ui-dev` branch pushed to GitHub
+- The `Container-Native` branch pushed to GitHub
 
 ### Step 1: Create a Docker Compose Application in Dokploy
 
@@ -48,7 +49,7 @@ Under the **General** tab:
 |---------|-------|
 | **Provider** | GitHub |
 | **Repository** | `tolakang/album-splitter` (or your fork) |
-| **Branch** | `tolakang-web-ui-dev` |
+| **Branch** | `Container-Native` |
 | **Compose Path** | `./dokploy/docker-compose.yml` |
 | **Trigger Type** | On Push |
 | **Autodeploy** | Enable (optional) |
@@ -68,6 +69,7 @@ POSTGRES_PASSWORD=changeme
 # Redis
 REDIS_HOST=redis
 REDIS_PORT=6379
+REDIS_PASSWORD=changeme
 
 # Application Domains (NO protocol, just hostname)
 FRONTEND_DOMAIN=<YOUR_DOMAIN>
@@ -87,14 +89,17 @@ FRONTEND_URL=https://<YOUR_DOMAIN>
 
 # Frontend
 NEXT_PUBLIC_API_URL=/api
+BACKEND_URL=http://backend:3001
 ```
 
 **Important:**
 - `POSTGRES_PASSWORD`: Change to a secure password
+- `REDIS_PASSWORD`: Change to a secure password (required for Redis authentication)
 - `FRONTEND_DOMAIN` & `BACKEND_DOMAIN`: **Plain hostnames ONLY** (no `https://`, no protocol). Example: `album.example.com`
 - `FRONTEND_URL`: Must be the **full public URL** including protocol (e.g., `https://album.example.com`). Backend uses this for CORS.
 - `NEXT_PUBLIC_API_URL`: Must stay as `/api` (relative path) for deployment to work
 - `FRONTEND_HOST` & `BACKEND_HOST`: Leave blank; use only if `FRONTEND_DOMAIN`/`BACKEND_DOMAIN` accidentally include a scheme
+- `BACKEND_URL`: Internal backend URL for frontend (default: `http://backend:3001`)
 
 Click **Save**.
 
@@ -126,6 +131,33 @@ For the backend, you have two options:
 3. Test uploading an audio file
 4. Check the backend health: `https://<YOUR_DOMAIN>/api/health`
 
+## Container-Native Features
+
+### Resource Limits
+All services have memory and CPU limits:
+- Frontend: 512M memory, 0.5 CPUs
+- Backend: 2G memory, 1.0 CPUs
+- Worker: 4G memory, 2.0 CPUs
+
+### Health Checks
+Node-based healthchecks for reliable monitoring (replaces wget-based checks).
+
+### Log Rotation
+Automatic log rotation to prevent disk fill:
+- Max size: 10MB per file
+- Max files: 3 per service
+
+### Redis Authentication
+Redis requires password authentication (set via `REDIS_PASSWORD`).
+
+### Migration Service
+Dedicated migration service for database migrations:
+```bash
+make migrate
+# or
+docker compose --profile migration run migrate
+```
+
 ## Troubleshooting
 
 ### Build fails with "NEXT_PUBLIC_API_URL not defined"
@@ -142,13 +174,16 @@ This means no containers are deployed yet. Click **Deploy** in the General tab.
 ### Database connection errors
 1. Ensure PostgreSQL container is healthy (check Logs → postgres)
 2. The `DATABASE_URL` is auto-built from `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`
-3. Prisma migrations run automatically on backend startup
+3. Run migrations manually: `make migrate`
 
 ### Large file upload fails (413 / 502)
 The upload limit is 500MB. If using a reverse proxy (nginx/Caddy), increase `client_max_body_size`.
 
 ### FFmpeg errors during splitting
 The backend Dockerfile installs FFmpeg. If splitting fails, check worker logs for the specific error.
+
+### Redis authentication errors
+Ensure `REDIS_PASSWORD` is set in both the environment and matches the password configured in Redis.
 
 ## Local Development with Docker Compose
 
@@ -162,6 +197,19 @@ Access:
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:3001/api
 - Swagger docs: http://localhost:3001/api/docs
+
+## Docker Commands
+
+Use the Makefile for common operations:
+
+```bash
+make up        # Start all services
+make down      # Stop all services
+make build     # Build Docker images
+make logs      # View logs
+make test      # Run backend tests
+make migrate   # Run database migrations
+```
 
 ## Support
 

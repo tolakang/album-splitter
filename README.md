@@ -61,6 +61,19 @@ docker compose up -d
 # - Swagger Docs: http://localhost:3001/api/docs
 ```
 
+### Docker Commands
+
+Use the Makefile for common operations:
+
+```bash
+make up        # Start all services
+make down      # Stop all services
+make build     # Build Docker images
+make logs      # View logs
+make test      # Run backend tests
+make migrate   # Run database migrations
+```
+
 ## API Endpoints
 
 | Method | Endpoint | Description |
@@ -98,31 +111,41 @@ album-splitter -f album.mp3 -t tracks.txt -a "Artist" -A "Album" -y 2024
 ```
 
 ## Configuration
-## Configuration
 
-Environment variables (local development):
+### Environment Variables
 
 ```bash
 # Database
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/album_splitter
+DATABASE_URL=postgresql://postgres:password@localhost:5432/album_splitter
 
 # Redis
 REDIS_HOST=localhost
 REDIS_PORT=6379
+REDIS_PASSWORD=changeme
 
-# Frontend (relative path in dev, proxied through Next.js)
+# Frontend
 NEXT_PUBLIC_API_URL=/api
+BACKEND_URL=http://backend:3001
 
 # Backend
 PORT=3001
 NODE_ENV=development
-FRONTEND_URL=http://localhost:3000  # For CORS
+FRONTEND_URL=http://localhost:3000
 ```
+
 ## Architecture
 
 ```
 Frontend (Next.js) → Backend API (NestJS) → Queue (BullMQ/Redis) → Worker → FFmpeg → Storage
 ```
+
+## Container-Native Features
+
+- **Resource Limits**: All services have memory and CPU limits
+- **Health Checks**: Node-based healthchecks for reliable monitoring
+- **Log Rotation**: Automatic log rotation to prevent disk fill
+- **Redis Authentication**: Password-protected Redis
+- **Migration Service**: Dedicated service for database migrations
 
 ## License
 
