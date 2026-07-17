@@ -2,8 +2,8 @@ import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { existsSync, createReadStream, unlinkSync } from 'fs';
 import { join } from 'path';
-import * as archiver from 'archiver';
-import { Response } from 'express';
+import archiver from 'archiver';
+import type { Response } from 'express';
 
 @Injectable()
 export class DownloadService {
@@ -65,7 +65,7 @@ export class DownloadService {
 
     const archive = archiver('zip', { zlib: { level: 1 } });
 
-    archive.on('error', (err) => {
+    archive.on('error', (err: Error) => {
       this.logger.error(`Archive error for album ${albumId}: ${err.message}`);
       if (!res.headersSent) {
         res.status(500).json({ message: 'Archive creation failed' });

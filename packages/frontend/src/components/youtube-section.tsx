@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Youtube, Loader2, CheckCircle, XCircle } from "lucide-react";
+import { Video, Loader2, CheckCircle, XCircle } from "lucide-react";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { Album } from "@/types";
@@ -88,15 +88,13 @@ export function YouTubeSection({ onAlbumCreated }: YouTubeSectionProps) {
 
   return (
     <Accordion
-      type="single"
-      collapsible
-      value={isExpanded ? "youtube" : ""}
-      onValueChange={(value) => setIsExpanded(value === "youtube")}
+      value={isExpanded ? ["youtube"] : []}
+      onValueChange={(value: string[]) => setIsExpanded(value.includes("youtube"))}
     >
       <AccordionItem value="youtube" className="border rounded-lg">
         <AccordionTrigger className="px-4">
           <div className="flex items-center gap-2">
-            <Youtube className="h-5 w-5 text-red-500" />
+            <Video className="h-5 w-5 text-red-500" />
             <span>YouTube Album Splitter</span>
             <Badge variant="secondary">Popular</Badge>
           </div>
@@ -160,7 +158,7 @@ export function YouTubeSection({ onAlbumCreated }: YouTubeSectionProps) {
                   </>
                 ) : (
                   <>
-                    <Youtube className="h-4 w-4 mr-2" />
+                    <Video className="h-4 w-4 mr-2" />
                     Split Album
                   </>
                 )}

@@ -33,20 +33,20 @@ async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> 
 
 export const api = {
   albums: {
-    list: () => fetchAPI<Album[]>('/api/albums'),
-    get: (id: string) => fetchAPI<Album>(`/api/albums/${id}`),
-    create: (data: CreateAlbumRequest) => fetchAPI<Album>('/api/albums', {
+    list: () => fetchAPI<Album[]>('/albums'),
+    get: (id: string) => fetchAPI<Album>(`/albums/${id}`),
+    create: (data: CreateAlbumRequest) => fetchAPI<Album>('/albums', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
-    delete: (id: string) => fetchAPI<void>(`/api/albums/${id}`, {
+    delete: (id: string) => fetchAPI<void>(`/albums/${id}`, {
       method: 'DELETE',
     }),
   },
 
   split: {
     trigger: (albumId: string, data: SplitRequest) =>
-      fetchAPI<SplitResponse>(`/api/split/${albumId}`, {
+      fetchAPI<SplitResponse>(`/split/${albumId}`, {
         method: 'POST',
         body: JSON.stringify(data),
       }),
@@ -57,7 +57,7 @@ export const api = {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch(`${API_BASE}/api/upload/${albumId}`, {
+      const response = await fetch(`${API_BASE}/upload/${albumId}`, {
         method: 'POST',
         body: formData,
       });
@@ -72,15 +72,15 @@ export const api = {
   },
 
   download: {
-    file: (fileId: string) => `${API_BASE}/api/download/${fileId}`,
-    zip: (albumId: string) => `${API_BASE}/api/download/zip/${albumId}`,
-    deleteFile: (fileId: string) => fetchAPI<void>(`/api/download/${fileId}`, {
+    file: (fileId: string) => `${API_BASE}/download/${fileId}`,
+    zip: (albumId: string) => `${API_BASE}/download/zip/${albumId}`,
+    deleteFile: (fileId: string) => fetchAPI<void>(`/download/${fileId}`, {
       method: 'DELETE',
     }),
   },
 
   cleanup: {
-    trigger: () => fetchAPI<{ cleaned: number }>('/api/cleanup', {
+    trigger: () => fetchAPI<{ cleaned: number }>('/cleanup', {
       method: 'POST',
     }),
   },

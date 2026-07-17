@@ -1,7 +1,7 @@
 import { Controller, Get, Delete, Param, Res, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { DownloadService } from './download.service';
-import { Response } from 'express';
+import type { Response } from 'express';
 
 @ApiTags('download')
 @Controller('download')

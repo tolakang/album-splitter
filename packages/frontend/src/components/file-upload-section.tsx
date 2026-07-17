@@ -140,10 +140,8 @@ export function FileUploadSection({ onAlbumCreated }: FileUploadSectionProps) {
 
   return (
     <Accordion
-      type="single"
-      collapsible
-      value={isExpanded ? "upload" : ""}
-      onValueChange={(value) => setIsExpanded(value === "upload")}
+      value={isExpanded ? ["upload"] : []}
+      onValueChange={(value: string[]) => setIsExpanded(value.includes("upload"))}
     >
       <AccordionItem value="upload" className="border rounded-lg">
         <AccordionTrigger className="px-4">

@@ -16,7 +16,7 @@ export class UploadController {
   @UseInterceptors(FileInterceptor('file', {
     storage: diskStorage({
       destination: uploadDir,
-      filename: (req, file, cb) => {
+      filename: (req: any, file: any, cb: any) => {
         const filename = `${req.params.albumId}-${file.originalname}`;
         cb(null, filename);
       },

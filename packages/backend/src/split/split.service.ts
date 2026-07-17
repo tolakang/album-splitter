@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma.service';
 import { existsSync, mkdirSync, readdirSync, statSync, unlinkSync, rmSync } from 'fs';
 import { join } from 'path';
 import * as musicMetadata from 'music-metadata';
-import * as ffmpeg from 'fluent-ffmpeg';
+import ffmpeg from 'fluent-ffmpeg';
 
 interface Track {
   title: string;
