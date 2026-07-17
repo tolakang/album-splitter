@@ -14,8 +14,6 @@ services:
     depends_on:
       backend:
         condition: service_healthy
-    networks:
-      - public
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
@@ -43,9 +41,6 @@ services:
         condition: service_healthy
     volumes:
       - album-storage:/app/storage
-    networks:
-      - internal
-      - public
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/api/health"]
@@ -71,8 +66,6 @@ services:
         condition: service_healthy
     volumes:
       - album-storage:/app/storage
-    networks:
-      - internal
     restart: unless-stopped
 
   postgres:
@@ -88,8 +81,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - internal
     restart: unless-stopped
 
   redis:
@@ -102,17 +93,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - internal
     restart: unless-stopped
 
 volumes:
   postgres-data:
   redis-data:
   album-storage:
-
-networks:
-  internal:
-    driver: bridge
-  public:
-    driver: bridge

@@ -8,7 +8,7 @@ Full-stack deployment using Docker Compose with 5 services: frontend, backend, w
 ┌─────────────┐     ┌──────────────┐     ┌──────────────┐
 │   Frontend   │────▶│   Backend    │────▶│    Worker    │
 │  (Next.js)   │     │   (NestJS)   │     │  (BullMQ)    │
-│   :8080      │     │   :3001      │     │              │
+│   :3000      │     │   :3001      │     │              │
 └─────────────┘     └──────┬───────┘     └──────┬───────┘
                            │                     │
                     ┌──────▼───────┐     ┌──────▼───────┐
@@ -90,7 +90,7 @@ Go to the **Domains** tab:
 
 1. Click **Add Domain**
 2. Enter your domain: `album.nokor24.com`
-3. Set the port to `8080` (frontend)
+3. Set the port to `3000` (frontend container port — NOT the host port)
 4. Enable **HTTPS** (Let's Encrypt) if available
 5. Save
 
@@ -145,7 +145,7 @@ docker compose up --build
 ```
 
 Access:
-- Frontend: http://localhost:8080
+- Frontend: http://localhost:3000
 - Backend API: http://localhost:3001/api
 - Swagger docs: http://localhost:3001/api/docs
 
