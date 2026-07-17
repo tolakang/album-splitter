@@ -16,9 +16,9 @@ services:
       - dokploy-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.album-frontend.rule=Host(`album.nokor24.com`)"
+      - "traefik.http.routers.album-frontend.rule=Host(`${FRONTEND_DOMAIN}`)"
       - "traefik.http.routers.album-frontend.entrypoints=web"
-      - "traefik.http.services.album-frontend.loadbalancer.server.port=3000"
+      - "traefik.http.services.album-frontend.loadbalancer.server.port=${FRONTEND_PORT}"
       - "traefik.http.routers.album-frontend.service=album-frontend"
     restart: unless-stopped
     healthcheck:

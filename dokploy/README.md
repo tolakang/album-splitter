@@ -69,9 +69,16 @@ POSTGRES_PASSWORD=changeme
 REDIS_HOST=redis
 REDIS_PORT=6379
 
+# Application Domains
+FRONTEND_DOMAIN=album.nokor24.com
+BACKEND_DOMAIN=api.album.nokor24.com
+
+# Application Ports (container ports)
+FRONTEND_PORT=3000
+BACKEND_PORT=3001
+
 # Backend
 NODE_ENV=production
-FRONTEND_URL=https://album.nokor24.com
 
 # Frontend
 NEXT_PUBLIC_API_URL=/api
@@ -79,7 +86,7 @@ NEXT_PUBLIC_API_URL=/api
 
 **Important:**
 - Change `POSTGRES_PASSWORD` to a secure password
-- Set `FRONTEND_URL` to your **actual public URL** (e.g., `https://album.nokor24.com`)
+- Set `FRONTEND_URL` to your **actual public URL** (e.g., `https://<YOUR_DOMAIN>`)
 - `NEXT_PUBLIC_API_URL=/api` — this must stay as `/api` (relative path)
 
 Click **Save**.
@@ -89,7 +96,7 @@ Click **Save**.
 Go to the **Domains** tab:
 
 1. Click **Add Domain**
-2. Enter your domain: `album.nokor24.com`
+2. Enter your domain: `<YOUR_DOMAIN>`
 3. Set the port to `3000` (frontend container port — NOT the host port)
 4. Enable **HTTPS** (Let's Encrypt) if available
 5. Save
@@ -107,10 +114,10 @@ For the backend, you have two options:
 
 ### Step 6: Verify
 
-1. Visit `https://album.nokor24.com`
+1. Visit `https://<YOUR_DOMAIN>`
 2. The frontend should load
 3. Test uploading an audio file
-4. Check the backend health: `https://album.nokor24.com/api/health`
+4. Check the backend health: `https://<YOUR_DOMAIN>/api/health`
 
 ## Troubleshooting
 

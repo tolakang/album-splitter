@@ -234,6 +234,43 @@ id, albumId, progress, status, queueId
 id, albumId, filename, size, path, downloaded, expiresAt
 ```
 
+### Phase 2: Database Schema with Prisma - COMPLETE
+
+Status: ✅ COMPLETE
+
+Completed items:
+
+- ✅ Generated Prisma migration SQL (prisma/migrations/20250101000000_init/migration.sql)
+  - Created tables: albums, tasks, generated_files
+  - Added UUID defaults for all primary keys
+  - Created enum types: AlbumStatus, TaskStatus
+  - Added foreign key constraints with cascade delete
+
+- ✅ Created migration_lock.toml for PostgreSQL provider
+
+- ✅ Fixed docker-entrypoint.sh to be resilient to migration failures
+  - Continues startup even if prisma migrate deploy fails
+  - Logs warnings instead of crashing
+
+- ✅ Fixed prisma.config.ts for Docker compatibility
+  - Kept dotenv/config import (safe in Docker - no-ops without .env)
+  - DATABASE_URL comes from docker-compose environment
+
+- ✅ Fixed PrismaService to pass DATABASE_URL to PrismaClient constructor
+  - Prisma 7.x requires explicit datasourceUrl in constructor
+  - prisma.config.ts is only for CLI tools (migrate, generate)
+  - At runtime, PrismaClient needs DATABASE_URL from environment
+
+- ✅ Fixed tsconfig.build.json to output to dist/ instead of dist/src/
+  - Added rootDir: './src' and include: ['src/**/*']
+  - Now dist/main.js exists as expected by Docker entrypoint
+
+- ✅ Verified Docker build includes migration files
+  - Backend Dockerfile copies prisma/ directory to production image
+  - Migrations are available at runtime
+
+All Phase 2 items checked and verified.
+
 ---
 
 # Phase 4 — Frontend
