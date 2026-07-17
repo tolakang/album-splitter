@@ -1,3 +1,15 @@
+FROM node:22-alpine AS deps
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY prisma ./prisma/
+COPY prisma.config.ts ./prisma.config.ts
+
+# Install production dependencies only
+RUN npm ci --only=production
+
 FROM node:22-alpine AS builder
 
 WORKDIR /app
@@ -7,7 +19,7 @@ COPY package*.json ./
 COPY prisma ./prisma/
 COPY prisma.config.ts ./prisma.config.ts
 
-# Install dependencies
+# Install all dependencies
 RUN npm ci
 
 # Generate Prisma client
@@ -27,9 +39,11 @@ WORKDIR /app
 # Install ffmpeg
 RUN apk add --no-cache ffmpeg
 
+# Copy production dependencies from deps stage
+COPY --from=deps /app/node_modules ./node_modules
+
 # Copy built application
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/prisma ./prisma/
 COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
