@@ -51,7 +51,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.album-backend.rule=Host(`${BACKEND_DOMAIN}`)"
       - "traefik.http.routers.album-backend.entrypoints=web"
-      - "traefik.http.services.album-backend.loadbalancer.server.port=3001"
+      - "traefik.http.services.album-backend.loadbalancer.server.port=${BACKEND_PORT}"
       - "traefik.http.routers.album-backend.service=album-backend"
     restart: unless-stopped
     healthcheck:
