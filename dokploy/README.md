@@ -70,8 +70,8 @@ REDIS_HOST=redis
 REDIS_PORT=6379
 
 # Application Domains
-FRONTEND_DOMAIN=album.nokor24.com
-BACKEND_DOMAIN=api.album.nokor24.com
+FRONTEND_DOMAIN=<YOUR_DOMAIN>
+BACKEND_DOMAIN=api.<YOUR_DOMAIN>
 
 # Application Ports (container ports)
 FRONTEND_PORT=3000
