@@ -52,7 +52,7 @@ git clone https://github.com/tolakang/album-splitter.git
 cd album-splitter
 
 # Start all services
-cd dokploy-new
+cd dokploy
 docker compose up -d
 
 # Access:
