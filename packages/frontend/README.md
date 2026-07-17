@@ -34,8 +34,15 @@ npm run dev
 
 ## Environment Variables
 
+For development:
 ```bash
-NEXT_PUBLIC_API_URL=http://localhost:3001
+NEXT_PUBLIC_API_URL=/api   # Relative path (Next.js proxy via next.config.ts)
+```
+
+For production (Docker):
+```bash
+NEXT_PUBLIC_API_URL=/api   # Relative path (routed through reverse proxy)
+BACKEND_URL=http://backend:3001  # Internal container communication (only for rewrites)
 ```
 
 ## Build

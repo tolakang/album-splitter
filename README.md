@@ -98,25 +98,26 @@ album-splitter -f album.mp3 -t tracks.txt -a "Artist" -A "Album" -y 2024
 ```
 
 ## Configuration
+## Configuration
 
-Environment variables:
+Environment variables (local development):
 
 ```bash
 # Database
-DATABASE_URL=postgresql://user:pass@localhost:5432/album_splitter
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/album_splitter
 
 # Redis
 REDIS_HOST=localhost
 REDIS_PORT=6379
 
-# Frontend
-NEXT_PUBLIC_API_URL=http://localhost:3001
+# Frontend (relative path in dev, proxied through Next.js)
+NEXT_PUBLIC_API_URL=/api
 
-# Server
+# Backend
 PORT=3001
-NODE_ENV=production
+NODE_ENV=development
+FRONTEND_URL=http://localhost:3000  # For CORS
 ```
-
 ## Architecture
 
 ```

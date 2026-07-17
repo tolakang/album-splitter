@@ -37,15 +37,27 @@ src/
 ```
 
 ## Environment Variables
+## Environment Variables
 
+For development:
 ```bash
-DATABASE_URL=postgresql://user:pass@localhost:5432/album_splitter
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/album_splitter
 REDIS_HOST=localhost
 REDIS_PORT=6379
 PORT=3001
 NODE_ENV=development
+FRONTEND_URL=http://localhost:3000  # For local dev CORS
 ```
 
+For production (Docker):
+```bash
+DATABASE_URL=postgresql://postgres:password@postgres:5432/album_splitter
+REDIS_HOST=redis
+REDIS_PORT=6379
+PORT=3001
+NODE_ENV=production
+FRONTEND_URL=https://<YOUR_DOMAIN>  # Must match actual public domain for CORS
+```
 ## Scripts
 
 ```bash

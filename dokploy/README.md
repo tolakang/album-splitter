@@ -69,9 +69,13 @@ POSTGRES_PASSWORD=changeme
 REDIS_HOST=redis
 REDIS_PORT=6379
 
-# Application Domains
+# Application Domains (NO protocol, just hostname)
 FRONTEND_DOMAIN=<YOUR_DOMAIN>
 BACKEND_DOMAIN=api.<YOUR_DOMAIN>
+
+# Optional: Sanitized domain overrides (leave blank normally)
+FRONTEND_HOST=
+BACKEND_HOST=
 
 # Application Ports (container ports)
 FRONTEND_PORT=3000
@@ -79,15 +83,18 @@ BACKEND_PORT=3001
 
 # Backend
 NODE_ENV=production
+FRONTEND_URL=https://<YOUR_DOMAIN>
 
 # Frontend
 NEXT_PUBLIC_API_URL=/api
 ```
 
 **Important:**
-- Change `POSTGRES_PASSWORD` to a secure password
-- Set `FRONTEND_URL` to your **actual public URL** (e.g., `https://<YOUR_DOMAIN>`)
-- `NEXT_PUBLIC_API_URL=/api` — this must stay as `/api` (relative path)
+- `POSTGRES_PASSWORD`: Change to a secure password
+- `FRONTEND_DOMAIN` & `BACKEND_DOMAIN`: **Plain hostnames ONLY** (no `https://`, no protocol). Example: `album.example.com`
+- `FRONTEND_URL`: Must be the **full public URL** including protocol (e.g., `https://album.example.com`). Backend uses this for CORS.
+- `NEXT_PUBLIC_API_URL`: Must stay as `/api` (relative path) for deployment to work
+- `FRONTEND_HOST` & `BACKEND_HOST`: Leave blank; use only if `FRONTEND_DOMAIN`/`BACKEND_DOMAIN` accidentally include a scheme
 
 Click **Save**.
 
