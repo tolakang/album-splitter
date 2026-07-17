@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   frontend:
     build:
@@ -7,15 +5,15 @@ services:
       dockerfile: Dockerfile
       args:
         - NEXT_PUBLIC_API_URL=/api
-    ports:
-      - "8080:3000"
     environment:
       - NEXT_PUBLIC_API_URL=/api
+    expose:
+      - "3000"
     depends_on:
       backend:
         condition: service_healthy
     networks:
-      - dokploy
+      - dokploy-network
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
@@ -28,8 +26,6 @@ services:
     build:
       context: ../packages/backend
       dockerfile: Dockerfile
-    ports:
-      - "3001:3001"
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-album_splitter}
       - REDIS_HOST=redis
@@ -44,7 +40,7 @@ services:
     volumes:
       - album-storage:/app/storage
     networks:
-      - dokploy
+      - dokploy-network
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/api/health"]
@@ -71,7 +67,7 @@ services:
     volumes:
       - album-storage:/app/storage
     networks:
-      - dokploy
+      - dokploy-network
     restart: unless-stopped
 
   postgres:
@@ -83,7 +79,7 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
     networks:
-      - dokploy
+      - dokploy-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 10s
@@ -97,7 +93,7 @@ services:
     volumes:
       - redis-data:/data
     networks:
-      - dokploy
+      - dokploy-network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -111,5 +107,5 @@ volumes:
   album-storage:
 
 networks:
-  dokploy:
+  dokploy-network:
     external: true
