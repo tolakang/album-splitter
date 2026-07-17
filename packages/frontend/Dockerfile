@@ -5,6 +5,10 @@ WORKDIR /app
 ARG NEXT_PUBLIC_API_URL=/api
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
+# Cache-buster: changes every build so the builder stage is never reused stale
+ARG BUILD_DATE=unknown
+ENV BUILD_DATE=$BUILD_DATE
+
 # Copy package files
 COPY package*.json ./
 
