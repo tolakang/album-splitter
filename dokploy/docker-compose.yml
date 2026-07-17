@@ -14,8 +14,6 @@ services:
     depends_on:
       backend:
         condition: service_healthy
-    networks:
-      - dokploy-network
     restart: unless-stopped
     deploy:
       resources:
@@ -52,8 +50,6 @@ services:
         condition: service_healthy
     volumes:
       - album-storage:/app/storage
-    networks:
-      - dokploy-network
     restart: unless-stopped
     deploy:
       resources:
@@ -90,8 +86,6 @@ services:
         condition: service_healthy
     volumes:
       - album-storage:/app/storage
-    networks:
-      - dokploy-network
     restart: unless-stopped
     deploy:
       resources:
@@ -113,8 +107,6 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./postgres-init.sh:/docker-entrypoint-initdb.d/10-password-sync.sh:ro
-    networks:
-      - dokploy-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 10s
@@ -127,8 +119,6 @@ services:
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-changeme}
     volumes:
       - redis-data:/data
-    networks:
-      - dokploy-network
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-changeme}", "ping"]
       interval: 10s
@@ -141,6 +131,3 @@ volumes:
   redis-data:
   album-storage:
 
-networks:
-  dokploy-network:
-    external: true
