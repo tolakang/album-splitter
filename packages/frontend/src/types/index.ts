@@ -42,6 +42,9 @@ export interface GeneratedFile {
 export interface CreateAlbumRequest {
   title?: string;
   youtubeUrl?: string;
+  artist?: string;
+  albumName?: string;
+  year?: number;
   tracks?: Track[];
 }
 

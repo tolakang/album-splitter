@@ -50,7 +50,7 @@ COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/docker-entrypoint.sh ./
 
 # Create storage directory
-RUN mkdir -p /app/storage/uploads /app/storage/generated /app/storage/temp /app/storage/thumbnails /app/storage/logs && chmod +x /app/docker-entrypoint.sh
+RUN mkdir -p /app/storage/uploads /app/storage/generated /app/storage/downloads /app/storage/temp /app/storage/thumbnails /app/storage/logs && chmod +x /app/docker-entrypoint.sh
 
 # Expose port
 EXPOSE 3001

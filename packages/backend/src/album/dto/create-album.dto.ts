@@ -23,6 +23,21 @@ export class CreateAlbumDto {
   @IsOptional()
   youtubeUrl?: string;
 
+  @ApiPropertyOptional({ description: 'Artist name' })
+  @IsString()
+  @IsOptional()
+  artist?: string;
+
+  @ApiPropertyOptional({ description: 'Album name' })
+  @IsString()
+  @IsOptional()
+  albumName?: string;
+
+  @ApiPropertyOptional({ description: 'Release year' })
+  @IsNumber()
+  @IsOptional()
+  year?: number;
+
   @ApiPropertyOptional({ description: 'Track list' })
   @IsArray()
   @ValidateNested({ each: true })

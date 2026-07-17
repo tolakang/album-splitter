@@ -12,11 +12,20 @@ export class AlbumService {
     private splitService: SplitService,
   ) {}
 
-  async create(data: { title?: string; youtubeUrl?: string }): Promise<Album> {
+  async create(data: {
+    title?: string;
+    youtubeUrl?: string;
+    artist?: string;
+    albumName?: string;
+    year?: number;
+  }): Promise<Album> {
     return this.prisma.album.create({
       data: {
         title: data.title,
         youtubeUrl: data.youtubeUrl,
+        artist: data.artist,
+        albumName: data.albumName,
+        year: data.year,
         status: AlbumStatus.PENDING,
       },
     });
@@ -47,8 +56,14 @@ export class AlbumService {
     });
   }
 
-  async updateProgress(id: string, progress: number): Promise<Album> {
+  async updateAudioPath(id: string, audioPath: string): Promise<Album> {
     return this.prisma.album.update({
+      where: { id },
+      data: { audioPath },
+    });
+  }
+
+  async updateProgress(id: string, progress: number): Promise<Album> {    return this.prisma.album.update({
       where: { id },
       data: { progress },
     });

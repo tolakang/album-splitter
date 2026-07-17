@@ -17,6 +17,9 @@ interface UploadCard {
   audioFile: File | null;
   trackList: string;
   albumTitle: string;
+  artist: string;
+  albumName: string;
+  year: string;
   isUploading: boolean;
 }
 
@@ -26,7 +29,7 @@ interface FileUploadSectionProps {
 
 export function FileUploadSection({ onAlbumCreated }: FileUploadSectionProps) {
   const [cards, setCards] = useState<UploadCard[]>([
-    { id: "1", audioFile: null, trackList: "", albumTitle: "", isUploading: false }
+    { id: "1", audioFile: null, trackList: "", albumTitle: "", artist: "", albumName: "", year: "", isUploading: false }
   ]);
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -38,6 +41,9 @@ export function FileUploadSection({ onAlbumCreated }: FileUploadSectionProps) {
         audioFile: null,
         trackList: "",
         albumTitle: "",
+        artist: "",
+        albumName: "",
+        year: "",
         isUploading: false,
       },
     ]);
@@ -76,13 +82,14 @@ export function FileUploadSection({ onAlbumCreated }: FileUploadSectionProps) {
     const lines = text.trim().split('\n');
     const tracks = [];
     for (const line of lines) {
-      const match = line.match(/^(\d{1,2}):(\d{2})\s+(.+)$/);
+      const match = line.match(/^(?:(\d{1,2}):)?(\d{1,2}):(\d{2})\s+(.+)$/);
       if (match) {
-        const minutes = parseInt(match[1], 10);
-        const seconds = parseInt(match[2], 10);
+        const hours = match[1] ? parseInt(match[1], 10) : 0;
+        const minutes = parseInt(match[2], 10);
+        const seconds = parseInt(match[3], 10);
         tracks.push({
-          title: match[3].trim(),
-          startTimestamp: minutes * 60 + seconds,
+          title: match[4].trim(),
+          startTimestamp: hours * 3600 + minutes * 60 + seconds,
         });
       }
     }
@@ -112,6 +119,9 @@ export function FileUploadSection({ onAlbumCreated }: FileUploadSectionProps) {
       // Create album with tracks
       const album = await api.albums.create({
         title: card.albumTitle || card.audioFile.name.replace(/\.[^/.]+$/, ""),
+        artist: card.artist || undefined,
+        albumName: card.albumName || undefined,
+        year: card.year ? parseInt(card.year, 10) : undefined,
         tracks,
       });
 
@@ -129,6 +139,9 @@ export function FileUploadSection({ onAlbumCreated }: FileUploadSectionProps) {
         audioFile: null,
         trackList: "",
         albumTitle: "",
+        artist: "",
+        albumName: "",
+        year: "",
         isUploading: false,
       });
 
@@ -236,6 +249,37 @@ export function FileUploadSection({ onAlbumCreated }: FileUploadSectionProps) {
                       onChange={(e) => updateCard(card.id, { albumTitle: e.target.value })}
                       disabled={card.isUploading}
                     />
+                  </div>
+
+                  {/* Metadata */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <div className="space-y-2">
+                      <Label>Artist (optional)</Label>
+                      <Input
+                        placeholder="Artist"
+                        value={card.artist}
+                        onChange={(e) => updateCard(card.id, { artist: e.target.value })}
+                        disabled={card.isUploading}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Album Name (optional)</Label>
+                      <Input
+                        placeholder="Album Name"
+                        value={card.albumName}
+                        onChange={(e) => updateCard(card.id, { albumName: e.target.value })}
+                        disabled={card.isUploading}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Year (optional)</Label>
+                      <Input
+                        placeholder="2024"
+                        value={card.year}
+                        onChange={(e) => updateCard(card.id, { year: e.target.value })}
+                        disabled={card.isUploading}
+                      />
+                    </div>
                   </div>
 
                   {/* Submit */}

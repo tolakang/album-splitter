@@ -26,6 +26,9 @@ enum TaskStatus {
 model Album {
   id           String      @id @default(uuid())
   title        String?
+  artist       String?
+  albumName    String?     @map("album_name")
+  year         Int?
   youtubeUrl   String?     @map("youtube_url")
   audioPath    String?     @map("audio_path")
   tracksJson   String?     @map("tracks_json")

@@ -32,7 +32,7 @@ The backend and frontend Dockerfiles are in `packages/backend/Dockerfile` and `p
 ### Prerequisites
 - A Dokploy server running (v0.5.0+)
 - A GitHub account with the `tolakang/album-splitter` repository
-- The `Container-Native` branch pushed to GitHub
+- The `Container-Native-V2` branch pushed to GitHub
 
 ### Step 1: Create a Docker Compose Application in Dokploy
 
@@ -49,7 +49,7 @@ Under the **General** tab:
 |---------|-------|
 | **Provider** | GitHub |
 | **Repository** | `tolakang/album-splitter` (or your fork) |
-| **Branch** | `Container-Native` |
+| **Branch** | `Container-Native-V2` |
 | **Compose Path** | `./dokploy/docker-compose.yml` |
 | **Trigger Type** | On Push |
 | **Autodeploy** | Enable (optional) |
@@ -149,6 +149,22 @@ make migrate
 docker compose --profile migration run migrate
 ```
 
+### YouTube Download + Metadata Tagging
+
+The YouTube Album Splitter now works end-to-end:
+
+1. The frontend sends the YouTube URL (and optional artist/album/year).
+2. On split, the backend downloads the audio server-side via `@distube/ytdl-core` (status `DOWNLOADING` → `PARSING` → `SPLITTING`).
+3. Each extracted track is tagged with ID3 metadata (title, track number, artist, album, year) using ffmpeg `-metadata`.
+
+Track lists accept `MM:SS` or `HH:MM:SS` timestamps.
+
+> **Note:** YouTube download depends on the upstream `youtube.com`/innertube availability and may break if YouTube changes its API. The uploaded-file path does not depend on this.
+
+### Force a Clean Frontend Rebuild
+
+If you see `Error: Could not find the action` / `Failed to find Server Action`, the deployed frontend has a stale cached build that doesn't match the server's Server Action IDs. The Dockerfile now runs `rm -rf .next && npm run build` to force a clean build. If the error persists after redeploy, trigger a full rebuild in Dokploy (General → **Deploy** → **Force Rebuild** / re-push the commit).
+
 ## Troubleshooting
 
 ### Build fails with "NEXT_PUBLIC_API_URL not defined"
@@ -176,7 +192,7 @@ This means no containers are deployed yet. Click **Deploy** in the General tab.
 1. Ensure PostgreSQL container is healthy (check Logs → postgres)
 2. The `DATABASE_URL` is auto-built from `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`
 3. Run migrations manually: `make migrate`
-4. **Password mismatch / "Skipping initialization"**: If postgres logs say `Database directory appears to contain a database; Skipping initialization` and you changed `POSTGRES_PASSWORD`, the existing volume still has the OLD password. **Fix**: either set `POSTGRES_PASSWORD` back to the original value, or destroy & recreate the `postgres-data` volume (Dokploy → Volumes → delete `postgres-data`, then redeploy) so postgres re-initializes with the new password.
+4. **Password mismatch / "Skipping initialization"**: If postgres logs say `Database directory appears to contain a database; Skipping initialization` and you changed `POSTGRES_PASSWORD`, the existing volume still has the OLD password. This deployment includes `dokploy/postgres-init.sh` (mounted into `/docker-entrypoint-initdb.d/`) which runs `ALTER USER` on every start and keeps the role password in sync — so this case is normally self-healing. If the script's `psql` step fails for any reason, the manual fix is: set `POSTGRES_PASSWORD` back to the value the volume was initialized with, or destroy & recreate the `postgres-data` volume (Dokploy → Volumes → delete `postgres-data`, then redeploy) so postgres re-initializes with the new password.
 
 ### Large file upload fails (413 / 502)
 The upload limit is 500MB. If using a reverse proxy (nginx/Caddy), increase `client_max_body_size`.

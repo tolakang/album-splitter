@@ -46,6 +46,8 @@ export class SplitService {
     const outputFiles: string[] = [];
     const zeroPadding = Math.max(2, String(tracks.length).length);
 
+    const metadataOptions = this.buildMetadataOptions(album, tracks.length);
+
     for (let i = 0; i < tracks.length; i++) {
       const track = tracks[i];
       const startTimestamp = track.startTimestamp;
@@ -54,7 +56,15 @@ export class SplitService {
       const filename = `${String(i + 1).padStart(zeroPadding, '0')} ${track.title}.${outputFormat}`;
       const outputPath = join(outputDir, filename);
 
-      await this.extractTrack(audioPath, outputPath, startTimestamp, endTimestamp);
+      await this.extractTrack(
+        audioPath,
+        outputPath,
+        startTimestamp,
+        endTimestamp,
+        metadataOptions,
+        i + 1,
+        track.title,
+      );
       outputFiles.push(outputPath);
 
       const progress = Math.round(((i + 1) / tracks.length) * 100);
@@ -79,20 +89,40 @@ export class SplitService {
     }
   }
 
+  private buildMetadataOptions(album: any, trackCount: number): string[] {
+    const options: string[] = [];
+    if (album.artist) options.push('-metadata', `artist=${album.artist}`);
+    if (album.albumName) options.push('-metadata', `album=${album.albumName}`);
+    if (album.year) options.push('-metadata', `year=${album.year}`, '-metadata', `date=${album.year}`);
+    options.push('-metadata', `tracktotal=${trackCount}`);
+    return options;
+  }
+
   private async extractTrack(
     inputPath: string,
     outputPath: string,
     startSeconds: number,
     endSeconds: number,
+    metadataOptions: string[] = [],
+    trackNumber?: number,
+    trackTitle?: string,
   ): Promise<void> {
     const duration = endSeconds - startSeconds;
     this.logger.log(`Extracting: ${startSeconds}s to ${endSeconds}s (${duration}s) → ${outputPath}`);
 
     return new Promise((resolve, reject) => {
-      ffmpeg(inputPath)
+      const command = ffmpeg(inputPath)
         .setStartTime(startSeconds)
         .setDuration(duration)
-        .output(outputPath)
+        .output(outputPath);
+
+      if (trackTitle) command.outputOptions('-metadata', `title=${trackTitle}`);
+      if (trackNumber) command.outputOptions('-metadata', `track=${trackNumber}`);
+      for (const opt of metadataOptions) {
+        command.outputOptions(opt);
+      }
+
+      command
         .on('end', () => resolve())
         .on('error', (err: Error) => {
           this.logger.error(`FFmpeg extraction failed: ${err.message}`);

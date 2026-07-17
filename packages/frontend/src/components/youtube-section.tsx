@@ -20,6 +20,9 @@ export function YouTubeSection({ onAlbumCreated }: YouTubeSectionProps) {
   const [youtubeUrl, setYoutubeUrl] = useState("");
   const [trackList, setTrackList] = useState("");
   const [albumTitle, setAlbumTitle] = useState("");
+  const [artist, setArtist] = useState("");
+  const [albumName, setAlbumName] = useState("");
+  const [year, setYear] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -27,13 +30,14 @@ export function YouTubeSection({ onAlbumCreated }: YouTubeSectionProps) {
     const lines = text.trim().split('\n');
     const tracks = [];
     for (const line of lines) {
-      const match = line.match(/^(\d{1,2}):(\d{2})\s+(.+)$/);
+      const match = line.match(/^(?:(\d{1,2}):)?(\d{1,2}):(\d{2})\s+(.+)$/);
       if (match) {
-        const minutes = parseInt(match[1], 10);
-        const seconds = parseInt(match[2], 10);
+        const hours = match[1] ? parseInt(match[1], 10) : 0;
+        const minutes = parseInt(match[2], 10);
+        const seconds = parseInt(match[3], 10);
         tracks.push({
-          title: match[3].trim(),
-          startTimestamp: minutes * 60 + seconds,
+          title: match[4].trim(),
+          startTimestamp: hours * 3600 + minutes * 60 + seconds,
         });
       }
     }
@@ -64,6 +68,9 @@ export function YouTubeSection({ onAlbumCreated }: YouTubeSectionProps) {
       const album = await api.albums.create({
         youtubeUrl,
         title: albumTitle || undefined,
+        artist: artist || undefined,
+        albumName: albumName || undefined,
+        year: year ? parseInt(year, 10) : undefined,
         tracks,
       });
 
@@ -77,6 +84,9 @@ export function YouTubeSection({ onAlbumCreated }: YouTubeSectionProps) {
       setYoutubeUrl("");
       setTrackList("");
       setAlbumTitle("");
+      setArtist("");
+      setAlbumName("");
+      setYear("");
       setIsExpanded(false);
 
     } catch (error: any) {
@@ -143,6 +153,40 @@ export function YouTubeSection({ onAlbumCreated }: YouTubeSectionProps) {
                   onChange={(e) => setAlbumTitle(e.target.value)}
                   disabled={isProcessing}
                 />
+              </div>
+
+              {/* Metadata */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div className="space-y-2">
+                  <Label htmlFor="youtube-artist">Artist (optional)</Label>
+                  <Input
+                    id="youtube-artist"
+                    placeholder="Artist"
+                    value={artist}
+                    onChange={(e) => setArtist(e.target.value)}
+                    disabled={isProcessing}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="youtube-album">Album Name (optional)</Label>
+                  <Input
+                    id="youtube-album"
+                    placeholder="Album Name"
+                    value={albumName}
+                    onChange={(e) => setAlbumName(e.target.value)}
+                    disabled={isProcessing}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="youtube-year">Year (optional)</Label>
+                  <Input
+                    id="youtube-year"
+                    placeholder="2024"
+                    value={year}
+                    onChange={(e) => setYear(e.target.value)}
+                    disabled={isProcessing}
+                  />
+                </div>
               </div>
 
               {/* Submit */}
