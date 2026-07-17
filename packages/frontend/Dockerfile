@@ -30,5 +30,9 @@ COPY --from=builder /app/public ./public
 # Expose port
 EXPOSE 3000
 
-# Start application - bind to 0.0.0.0 so healthcheck works inside container (IPv6 support)
-CMD ["node", "server.js", "--hostname", "0.0.0.0"]
+# Bind to 0.0.0.0 so the server is reachable on localhost (healthcheck) and
+# on the container network (Traefik). Next.js standalone honors HOSTNAME env var.
+ENV HOSTNAME=0.0.0.0
+
+# Start application
+CMD ["node", "server.js"]

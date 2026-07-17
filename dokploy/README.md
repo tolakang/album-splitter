@@ -155,10 +155,11 @@ docker compose --profile migration run migrate
 Make sure `NEXT_PUBLIC_API_URL=/api` is set in the Dokploy **Environment** tab. Next.js requires this at build time.
 
 ### Frontend returns 404 Page Not Found
-1. **Check domain configuration**: Go to Domains tab → verify the domain is added for the `frontend` service on port `3000`
-2. **Redeploy after domain changes**: After adding/changing a domain, click **Deploy** again
-3. **Check Traefik labels**: Do NOT have Traefik labels in `docker-compose.yml` — Dokploy manages them via the UI
-4. **Check container health**: Frontend container must be healthy (check Logs → frontend)
+1. **Container must be HEALTHY**: The Next.js server must bind to `0.0.0.0` (set via `HOSTNAME=0.0.0.0` in the Dockerfile). If it binds only to the container hostname, the `localhost` healthcheck fails and Traefik returns 404.
+2. **Check domain configuration**: Go to Domains tab → verify the domain is added for the `frontend` service on port `3000`
+3. **Redeploy after domain changes**: After adding/changing a domain, click **Deploy** again
+4. **Check Traefik labels**: Do NOT have Traefik labels in `docker-compose.yml` — Dokploy manages them via the UI
+5. **Check container health**: Frontend container must be healthy (check Logs → frontend)
 
 ### Frontend loads but API calls fail (404/500)
 1. Check backend is running: `docker compose ps` in the terminal
@@ -175,6 +176,7 @@ This means no containers are deployed yet. Click **Deploy** in the General tab.
 1. Ensure PostgreSQL container is healthy (check Logs → postgres)
 2. The `DATABASE_URL` is auto-built from `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`
 3. Run migrations manually: `make migrate`
+4. **Password mismatch / "Skipping initialization"**: If postgres logs say `Database directory appears to contain a database; Skipping initialization` and you changed `POSTGRES_PASSWORD`, the existing volume still has the OLD password. **Fix**: either set `POSTGRES_PASSWORD` back to the original value, or destroy & recreate the `postgres-data` volume (Dokploy → Volumes → delete `postgres-data`, then redeploy) so postgres re-initializes with the new password.
 
 ### Large file upload fails (413 / 502)
 The upload limit is 500MB. If using a reverse proxy (nginx/Caddy), increase `client_max_body_size`.
