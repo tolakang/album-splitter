@@ -141,12 +141,12 @@ Automatic log rotation to prevent disk fill:
 ### Redis Authentication
 Redis requires password authentication (set via `REDIS_PASSWORD`).
 
-### Migration Service
-Dedicated migration service for database migrations:
+### Migration Service (runs automatically)
+The `migrate` service runs on **every deploy** (no manual step needed). It generates the Prisma client and applies all migrations idempotently (`prisma migrate deploy`), then exits. The `backend` and `worker` services use `depends_on: migrate: service_completed_successfully`, so they wait for the schema (and the new `albums` table) to exist before starting. This prevents the "relation does not exist" error on fresh deployments.
+
+If you ever need to run it manually:
 ```bash
-make migrate
-# or
-docker compose --profile migration run migrate
+docker compose -f ./dokploy/docker-compose.yml run --rm migrate
 ```
 
 ### YouTube Download + Metadata Tagging

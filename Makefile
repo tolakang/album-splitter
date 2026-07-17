@@ -16,4 +16,4 @@ test:
 	docker compose -f dokploy/docker-compose.yml exec backend npm test
 
 migrate:
-	docker compose -f dokploy/docker-compose.yml --profile migration run migrate
+	docker compose -f dokploy/docker-compose.yml run --rm migrate
