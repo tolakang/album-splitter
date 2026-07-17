@@ -1,15 +1,16 @@
-import { Controller, Post, Param, Body, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Controller, Post, Param, Body, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import { PrismaService } from '../prisma.service';
+import { AlbumService } from '../album/album.service';
 import { TrackDto } from '../album/dto/create-album.dto';
+import { AlbumStatus } from '@prisma/client';
 
 @ApiTags('split')
-@Controller('api/split')
+@Controller('split')
 export class SplitController {
   constructor(
-    private prisma: PrismaService,
+    private albumService: AlbumService,
     @InjectQueue('audio-processing') private audioQueue: Queue,
   ) {}
 
@@ -24,22 +25,13 @@ export class SplitController {
       throw new BadRequestException('At least one track is required');
     }
 
-    const album = await this.prisma.album.findUnique({ where: { id: albumId } });
-    if (!album) {
-      throw new NotFoundException(`Album ${albumId} not found`);
-    }
+    const album = await this.albumService.findById(albumId);
 
     if (!album.audioPath) {
       throw new BadRequestException('No audio file uploaded for this album');
     }
 
-    await this.prisma.album.update({
-      where: { id: albumId },
-      data: {
-        tracksJson: JSON.stringify(body.tracks),
-        status: 'PARSING' as any,
-      },
-    });
+    await this.albumService.updateStatus(albumId, AlbumStatus.PARSING);
 
     const job = await this.audioQueue.add('process-album', {
       albumId,

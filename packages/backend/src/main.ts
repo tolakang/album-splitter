@@ -38,6 +38,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Global prefix
+  app.setGlobalPrefix('api');
+
   // Global exception filter — normalizes error responses for frontend
   app.useGlobalFilters(new AllExceptionsFilter());
 
@@ -60,6 +63,7 @@ async function bootstrap() {
     .setTitle('Album Splitter API')
     .setDescription('API for splitting audio albums into individual tracks')
     .setVersion('1.0')
+    .addTag('health', 'Health checks')
     .addTag('albums', 'Album management')
     .addTag('upload', 'File uploads')
     .addTag('split', 'Audio splitting')

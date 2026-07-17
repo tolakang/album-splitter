@@ -31,12 +31,13 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/prisma ./prisma/
+COPY --from=builder /app/docker-entrypoint.sh ./
 
 # Create storage directory
-RUN mkdir -p /app/storage/uploads /app/storage/generated /app/storage/temp /app/storage/thumbnails /app/storage/logs
+RUN mkdir -p /app/storage/uploads /app/storage/generated /app/storage/temp /app/storage/thumbnails /app/storage/logs && chmod +x /app/docker-entrypoint.sh
 
 # Expose port
 EXPOSE 3001
 
-# Start application
-CMD ["node", "dist/main.js"]
+# Start application with migrations
+ENTRYPOINT ["/app/docker-entrypoint.sh"]

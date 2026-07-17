@@ -2,14 +2,27 @@ import { Controller, Post, Param, UseInterceptors, UploadedFile, BadRequestExcep
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { UploadService } from './upload.service';
+import { diskStorage } from 'multer';
+import { join } from 'path';
+
+const uploadDir = join(process.cwd(), 'storage', 'uploads');
 
 @ApiTags('upload')
-@Controller('api/upload')
+@Controller('upload')
 export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
 
   @Post(':albumId')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', {
+    storage: diskStorage({
+      destination: uploadDir,
+      filename: (req, file, cb) => {
+        const filename = `${req.params.albumId}-${file.originalname}`;
+        cb(null, filename);
+      },
+    }),
+    limits: { fileSize: 500 * 1024 * 1024 }, // 500MB
+  }))
   @ApiOperation({ summary: 'Upload audio file' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -33,11 +46,6 @@ export class UploadController {
       throw new BadRequestException('Invalid file type. Allowed: MP3, WAV, FLAC, OGG, M4A');
     }
 
-    const maxSize = 500 * 1024 * 1024; // 500MB
-    if (file.size > maxSize) {
-      throw new BadRequestException('File too large. Maximum size: 500MB');
-    }
-
-    return this.uploadService.uploadFile(file, albumId);
+    return this.uploadService.handleUploadedFile(file, albumId);
   }
 }

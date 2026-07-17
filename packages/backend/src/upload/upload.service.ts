@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { existsSync, mkdirSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 
 @Injectable()
@@ -14,7 +14,7 @@ export class UploadService {
     }
   }
 
-  async uploadFile(file: Express.Multer.File, albumId: string): Promise<{ filename: string }> {
+  async handleUploadedFile(file: Express.Multer.File, albumId: string): Promise<{ filename: string }> {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
@@ -24,11 +24,7 @@ export class UploadService {
       throw new BadRequestException('Album not found');
     }
 
-    const filename = `${albumId}-${file.originalname}`;
-    const filepath = join(this.uploadDir, filename);
-
-    // Write the file buffer to disk
-    writeFileSync(filepath, file.buffer);
+    const filepath = join(this.uploadDir, file.filename);
     this.logger.log(`Saved upload to ${filepath} (${file.size} bytes)`);
 
     // Persist the audio path on the album record
@@ -37,7 +33,7 @@ export class UploadService {
       data: { audioPath: filepath },
     });
 
-    return { filename };
+    return { filename: file.filename };
   }
 
   getUploadPath(): string {

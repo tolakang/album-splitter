@@ -4,7 +4,7 @@ import { AlbumService } from './album.service';
 import { CreateAlbumDto } from './dto/create-album.dto';
 
 @ApiTags('albums')
-@Controller('api/albums')
+@Controller('albums')
 export class AlbumController {
   constructor(private readonly albumService: AlbumService) {}
 

@@ -4,7 +4,7 @@ import { DownloadService } from './download.service';
 import { Response } from 'express';
 
 @ApiTags('download')
-@Controller('api/download')
+@Controller('download')
 export class DownloadController {
   constructor(private readonly downloadService: DownloadService) {}
 

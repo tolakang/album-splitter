@@ -35,7 +35,7 @@ model Album {
   errorMessage String?     @map("error_message")
   createdAt    DateTime    @default(now()) @map("created_at")
   updatedAt    DateTime    @updatedAt @map("updated_at")
-  expiresAt    DateTime?   @default(now() + interval 1 hour) @map("expires_at")
+  expiresAt    DateTime?   @default(dbgenerated("now() + interval '1 hour'")) @map("expires_at")
 
   tasks          Task[]
   generatedFiles GeneratedFile[]
@@ -69,7 +69,7 @@ model GeneratedFile {
   path         String
   downloaded   Boolean  @default(false)
   createdAt    DateTime @default(now()) @map("created_at")
-  expiresAt    DateTime @default(now() + interval 1 hour) @map("expires_at")
+  expiresAt    DateTime @default(dbgenerated("now() + interval '1 hour'")) @map("expires_at")
 
   album Album @relation(fields: [albumId], references: [id], onDelete: Cascade)
 

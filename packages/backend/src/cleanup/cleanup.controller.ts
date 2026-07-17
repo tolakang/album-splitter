@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CleanupService } from './cleanup.service';
 
 @ApiTags('cleanup')
-@Controller('api/cleanup')
+@Controller('cleanup')
 export class CleanupController {
   constructor(private readonly cleanupService: CleanupService) {}
 

@@ -28,9 +28,18 @@ export class DownloadService {
     const stream = createReadStream(file.path);
     stream.pipe(res);
 
-    await this.prisma.generatedFile.update({
-      where: { id: fileId },
-      data: { downloaded: true },
+    stream.on('end', async () => {
+      await this.prisma.generatedFile.update({
+        where: { id: fileId },
+        data: { downloaded: true },
+      });
+    });
+
+    stream.on('error', (err) => {
+      this.logger.error(`Stream error for file ${fileId}: ${err.message}`);
+      if (!res.headersSent) {
+        res.status(500).json({ message: 'Download failed' });
+      }
     });
   }
 
@@ -55,6 +64,21 @@ export class DownloadService {
     res.setHeader('Content-Disposition', `attachment; filename="${zipFilename}"`);
 
     const archive = archiver('zip', { zlib: { level: 1 } });
+
+    archive.on('error', (err) => {
+      this.logger.error(`Archive error for album ${albumId}: ${err.message}`);
+      if (!res.headersSent) {
+        res.status(500).json({ message: 'Archive creation failed' });
+      }
+    });
+
+    archive.on('end', async () => {
+      await this.prisma.generatedFile.updateMany({
+        where: { albumId },
+        data: { downloaded: true },
+      });
+    });
+
     archive.pipe(res);
 
     for (const file of album.generatedFiles) {
@@ -64,11 +88,6 @@ export class DownloadService {
     }
 
     await archive.finalize();
-
-    await this.prisma.generatedFile.updateMany({
-      where: { albumId },
-      data: { downloaded: true },
-    });
   }
 
   async deleteFile(fileId: string): Promise<void> {
