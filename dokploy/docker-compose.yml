@@ -17,7 +17,7 @@ services:
       - dokploy-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.album-frontend.rule=Host(`${FRONTEND_HOST:-${FRONTEND_DOMAIN}}`)"
+      - "traefik.http.routers.album-frontend.rule=Host(`${FRONTEND_DOMAIN}`)"
       - "traefik.http.routers.album-frontend.entrypoints=web,websecure"
       - "traefik.http.services.album-frontend.loadbalancer.server.port=3000"
       - "traefik.http.routers.album-frontend.tls=true"
@@ -60,13 +60,6 @@ services:
       - album-storage:/app/storage
     networks:
       - dokploy-network
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.album-backend.rule=Host(`${BACKEND_HOST:-${BACKEND_DOMAIN}}`)"
-      - "traefik.http.routers.album-backend.entrypoints=web,websecure"
-      - "traefik.http.services.album-backend.loadbalancer.server.port=3001"
-      - "traefik.http.routers.album-backend.tls=true"
-      - "traefik.http.routers.album-backend.service=album-backend"
     restart: unless-stopped
     deploy:
       resources:
