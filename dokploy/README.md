@@ -71,9 +71,6 @@ REDIS_HOST=redis
 REDIS_PORT=6379
 REDIS_PASSWORD=changeme
 
-# Application Domain (NO protocol, just hostname)
-FRONTEND_DOMAIN=<YOUR_DOMAIN>
-
 # Backend
 NODE_ENV=production
 FRONTEND_URL=https://<YOUR_DOMAIN>
@@ -86,26 +83,30 @@ BACKEND_URL=http://backend:3001
 **Important:**
 - `POSTGRES_PASSWORD`: Change to a secure password
 - `REDIS_PASSWORD`: Change to a secure password (required for Redis authentication)
-- `FRONTEND_DOMAIN`: **Plain hostname ONLY** (no `https://`, no protocol). Example: `album.example.com`
 - `FRONTEND_URL`: Must be the **full public URL** including protocol (e.g., `https://album.example.com`). Backend uses this for CORS.
 - `NEXT_PUBLIC_API_URL`: Must stay as `/api` (relative path) for deployment to work
 - `BACKEND_URL`: Internal backend URL for frontend (default: `http://backend:3001`)
 
 Click **Save**.
 
-### Step 4: Configure Domain
+### Step 4: Configure Domain (Critical)
 
-Go to the **Domains** tab:
+Go to the **Domains** tab and add the frontend service domain:
 
 1. Click **Add Domain**
-2. Enter your domain: `<YOUR_DOMAIN>`
-3. Set the port to `3000` (frontend container port)
-4. Enable **HTTPS** (Let's Encrypt) if available
-5. Save
+2. **Service Name**: Select the `frontend` service
+3. **Host**: Enter your domain, e.g. `album.example.com`
+4. **Port**: Set to `3000` (this is the container port the frontend listens on)
+5. Enable **HTTPS** (Let's Encrypt) if available
+6. Click **Save**
+
+> **Important:** The port must be `3000` — this is the port inside the container, not the external port. Dokploy uses this to configure Traefik routing.
 
 For the backend, you have two options:
 - **Option A**: Use the frontend as a proxy (recommended) — the Next.js rewrites handle `/api/*` → backend
 - **Option B**: Add a second domain on port `3001` for direct backend access
+
+> **Note:** Do NOT add Traefik labels in `docker-compose.yml`. Dokploy manages Traefik routing through its own UI domain configuration. Adding labels in the compose file will conflict and cause 404 errors.
 
 ### Step 5: Deploy
 
@@ -152,6 +153,12 @@ docker compose --profile migration run migrate
 
 ### Build fails with "NEXT_PUBLIC_API_URL not defined"
 Make sure `NEXT_PUBLIC_API_URL=/api` is set in the Dokploy **Environment** tab. Next.js requires this at build time.
+
+### Frontend returns 404 Page Not Found
+1. **Check domain configuration**: Go to Domains tab → verify the domain is added for the `frontend` service on port `3000`
+2. **Redeploy after domain changes**: After adding/changing a domain, click **Deploy** again
+3. **Check Traefik labels**: Do NOT have Traefik labels in `docker-compose.yml` — Dokploy manages them via the UI
+4. **Check container health**: Frontend container must be healthy (check Logs → frontend)
 
 ### Frontend loads but API calls fail (404/500)
 1. Check backend is running: `docker compose ps` in the terminal
