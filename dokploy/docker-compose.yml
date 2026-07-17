@@ -19,6 +19,7 @@ services:
       - "traefik.http.routers.album-frontend.rule=Host(`${FRONTEND_DOMAIN}`)"
       - "traefik.http.routers.album-frontend.entrypoints=web,websecure"
       - "traefik.http.services.album-frontend.loadbalancer.server.port=${FRONTEND_PORT}"
+      - "traefik.http.routers.album-frontend.tls=true"
       - "traefik.http.routers.album-frontend.service=album-frontend"
     restart: unless-stopped
     healthcheck:
@@ -52,6 +53,7 @@ services:
       - "traefik.http.routers.album-backend.rule=Host(`${BACKEND_DOMAIN}`)"
       - "traefik.http.routers.album-backend.entrypoints=web,websecure"
       - "traefik.http.services.album-backend.loadbalancer.server.port=${BACKEND_PORT}"
+      - "traefik.http.routers.album-backend.tls=true"
       - "traefik.http.routers.album-backend.service=album-backend"
     restart: unless-stopped
     healthcheck:
